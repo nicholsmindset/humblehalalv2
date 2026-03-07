@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HumbleHalal — Design Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital@1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#047857',
+            accent: '#D4A017',
+            charcoal: '#1C1917',
+            'warm-white': '#FAFAF8',
+            'background-dark': '#0f231d',
+          },
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif'],
+            display: ['Playfair Display', 'serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Manrope', sans-serif; background: #FAFAF8; }
+    .islamic-pattern {
+      background-image: radial-gradient(#D4A017 0.5px, transparent 0.5px);
+      background-size: 24px 24px;
+      opacity: 0.12;
+      position: absolute; inset: 0; pointer-events: none;
+    }
+    .frosted-glass {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-feature-settings: 'liga'; font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; }
+    .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #047857; margin-bottom: 12px; }
+  </style>
+</head>
+<body class="min-h-screen bg-warm-white">
+
+  <!-- ─── NAVBAR ─────────────────────────────────────────────── -->
+  <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-primary/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-2xl">mosque</span>
+        <span class="text-xl">
+          <span class="font-extrabold text-charcoal font-sans">Humble</span><span class="italic text-accent font-display">Halal</span>
+        </span>
+      </a>
+      <!-- Nav links -->
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-charcoal/70">
+        <a href="#" class="hover:text-primary transition-colors">Restaurants</a>
+        <a href="#" class="hover:text-primary transition-colors">Businesses</a>
+        <a href="#" class="hover:text-primary transition-colors">Events</a>
+        <a href="#" class="hover:text-primary transition-colors">Classifieds</a>
+        <a href="#" class="hover:text-primary transition-colors">Mosques</a>
+        <a href="#" class="hover:text-primary transition-colors">Blog</a>
+      </div>
+      <!-- Right CTA -->
+      <div class="flex items-center gap-3">
+        <button class="p-2 text-charcoal/60 hover:text-primary">
+          <span class="material-symbols-outlined text-xl">search</span>
+        </button>
+        <button class="bg-accent text-charcoal text-sm font-bold px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors">
+          Sign in
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="pt-16">
+
+  <!-- ─── HERO ──────────────────────────────────────────────── -->
+  <section class="relative bg-background-dark overflow-hidden min-h-[520px] flex items-center">
+    <div class="islamic-pattern"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+      <div class="inline-flex items-center gap-2 bg-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full mb-6 border border-primary/30">
+        <span class="material-symbols-outlined text-sm">verified</span>
+        10,000+ Halal Listings in Singapore
+      </div>
+      <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight">
+        Singapore's<br/>
+        <span class="italic font-display text-accent">Halal</span> Ecosystem
+      </h1>
+      <p class="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+        Find MUIS-certified restaurants, halal businesses, mosques, events, and more — all in one place.
+      </p>
+      <!-- Search bar -->
+      <div class="frosted-glass max-w-2xl mx-auto rounded-xl p-2 flex gap-2">
+        <div class="flex-1 flex items-center gap-2 bg-white/10 rounded-lg px-4 py-3">
+          <span class="material-symbols-outlined text-white/50 text-xl">search</span>
+          <input type="text" placeholder="Search restaurants, mosques, events…" class="bg-transparent text-white placeholder-white/40 text-sm flex-1 outline-none" />
+        </div>
+        <button class="bg-accent text-charcoal font-bold px-6 py-3 rounded-lg text-sm hover:bg-accent/90 transition-colors whitespace-nowrap">
+          Search
+        </button>
+      </div>
+      <!-- Quick filters -->
+      <div class="flex flex-wrap justify-center gap-2 mt-5">
+        <span class="bg-white/10 text-white/70 text-xs px-3 py-1.5 rounded-full cursor-pointer hover:bg-white/20 transition-colors border border-white/10">Orchard</span>
+        <span class="bg-white/10 text-white/70 text-xs px-3 py-1.5 rounded-full cursor-pointer hover:bg-white/20 transition-colors border border-white/10">Jurong West</span>
+        <span class="bg-white/10 text-white/70 text-xs px-3 py-1.5 rounded-full cursor-pointer hover:bg-white/20 transition-colors border border-white/10">Tampines</span>
+        <span class="bg-white/10 text-white/70 text-xs px-3 py-1.5 rounded-full cursor-pointer hover:bg-white/20 transition-colors border border-white/10">Geylang</span>
+        <span class="bg-white/10 text-white/70 text-xs px-3 py-1.5 rounded-full cursor-pointer hover:bg-white/20 transition-colors border border-white/10">Bishan</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DESIGN TOKENS ─────────────────────────────────────── -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <p class="section-label">Design Tokens</p>
+    <h2 class="text-2xl font-extrabold text-charcoal mb-8">Colours & Typography</h2>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+      <div><div class="h-16 rounded-xl bg-primary mb-2"></div><p class="text-xs font-bold text-charcoal">Primary</p><p class="text-xs text-charcoal/50">#047857</p></div>
+      <div><div class="h-16 rounded-xl bg-accent mb-2"></div><p class="text-xs font-bold text-charcoal">Accent</p><p class="text-xs text-charcoal/50">#D4A017</p></div>
+      <div><div class="h-16 rounded-xl bg-charcoal mb-2"></div><p class="text-xs font-bold text-charcoal">Charcoal</p><p class="text-xs text-charcoal/50">#1C1917</p></div>
+      <div><div class="h-16 rounded-xl bg-warm-white border border-gray-200 mb-2"></div><p class="text-xs font-bold text-charcoal">Warm White</p><p class="text-xs text-charcoal/50">#FAFAF8</p></div>
+      <div><div class="h-16 rounded-xl bg-background-dark mb-2"></div><p class="text-xs font-bold text-charcoal">Dark BG</p><p class="text-xs text-charcoal/50">#0f231d</p></div>
+    </div>
+    <!-- Typography -->
+    <div class="space-y-3">
+      <p class="text-5xl font-extrabold text-charcoal font-sans">Manrope 800 — Heading</p>
+      <p class="text-3xl font-bold text-charcoal font-sans">Manrope 700 — Subheading</p>
+      <p class="text-xl font-semibold text-charcoal font-sans">Manrope 600 — Section title</p>
+      <p class="text-base font-medium text-charcoal/70 font-sans">Manrope 500 — Body medium. Singapore's complete halal directory.</p>
+      <p class="text-base text-charcoal/60 font-sans">Manrope 400 — Body regular. Find MUIS-certified restaurants near you.</p>
+      <p class="text-4xl italic font-display text-accent">Playfair Display italic — "Halal"</p>
+    </div>
+  </section>
+
+  <!-- ─── COMPONENTS ────────────────────────────────────────── -->
+  <section class="bg-white border-t border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <p class="section-label">Components</p>
+      <h2 class="text-2xl font-extrabold text-charcoal mb-8">Badges & Buttons</h2>
+      <div class="flex flex-wrap gap-4 items-center mb-12">
+        <!-- MUIS badge -->
+        <span class="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">verified</span>MUIS Certified
+        </span>
+        <!-- Muslim owned -->
+        <span class="bg-emerald-50 text-primary text-xs font-bold px-3 py-1 rounded-full border border-primary/20">Muslim Owned</span>
+        <!-- Self declared -->
+        <span class="bg-gray-100 text-charcoal/60 text-xs font-bold px-3 py-1 rounded-full">Self Declared</span>
+        <!-- Gold CTA -->
+        <button class="bg-accent text-charcoal font-bold px-5 py-2.5 rounded-lg text-sm hover:bg-accent/90 transition-colors">
+          List Your Business
+        </button>
+        <!-- Primary button -->
+        <button class="bg-primary text-white font-bold px-5 py-2.5 rounded-lg text-sm hover:bg-primary/90 transition-colors">
+          View All
+        </button>
+        <!-- Ghost button -->
+        <button class="border border-primary text-primary font-bold px-5 py-2.5 rounded-lg text-sm hover:bg-primary/5 transition-colors">
+          Learn More
+        </button>
+      </div>
+
+      <!-- Star rating component -->
+      <h3 class="text-lg font-bold text-charcoal mb-4">Rating & Stars</h3>
+      <div class="flex items-center gap-3 mb-12">
+        <div class="flex gap-0.5">
+          <span class="material-symbols-outlined text-accent text-xl" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined text-accent text-xl" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined text-accent text-xl" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined text-accent text-xl" style="font-variation-settings:'FILL' 1">star</span>
+          <span class="material-symbols-outlined text-gray-300 text-xl" style="font-variation-settings:'FILL' 1">star</span>
+        </div>
+        <span class="text-charcoal font-bold text-sm">4.0</span>
+        <span class="text-charcoal/50 text-sm">(128 reviews)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── RESTAURANT CARDS ──────────────────────────────────── -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <p class="section-label">Listing Cards</p>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-extrabold text-charcoal">Top Halal Restaurants</h2>
+      <a href="#" class="text-primary text-sm font-bold hover:underline flex items-center gap-1">
+        View all <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Card 1 — MUIS Certified -->
+      <div class="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden cursor-pointer">
+        <div class="relative h-48 bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-6xl text-primary/30">restaurant</span>
+          <div class="absolute top-3 left-3">
+            <span class="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">verified</span>MUIS Certified
+            </span>
+          </div>
+          <div class="absolute top-3 right-3">
+            <button class="bg-white/90 rounded-full p-1.5 hover:bg-white transition-colors">
+              <span class="material-symbols-outlined text-charcoal/60 text-lg">favorite_border</span>
+            </button>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-1">
+            <h3 class="font-bold text-charcoal text-base">Al-Azhar Restaurant</h3>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-accent text-sm" style="font-variation-settings:'FILL' 1">star</span>
+              <span class="text-sm font-bold text-charcoal">4.5</span>
+            </div>
+          </div>
+          <p class="text-charcoal/50 text-xs mb-3 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">location_on</span>
+            Arab Street, Kampong Glam · North Indian
+          </p>
+          <div class="flex items-center justify-between">
+            <span class="text-charcoal/50 text-xs">$$  · Open now</span>
+            <span class="text-xs text-primary font-semibold flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">schedule</span>11am – 10pm
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 — Muslim Owned -->
+      <div class="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden cursor-pointer">
+        <div class="relative h-48 bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-6xl text-accent/30">ramen_dining</span>
+          <div class="absolute top-3 left-3">
+            <span class="bg-emerald-50 text-primary text-xs font-bold px-2.5 py-1 rounded-full border border-primary/20">Muslim Owned</span>
+          </div>
+          <div class="absolute top-3 right-3">
+            <button class="bg-white/90 rounded-full p-1.5 hover:bg-white transition-colors">
+              <span class="material-symbols-outlined text-charcoal/60 text-lg">favorite_border</span>
+            </button>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-1">
+            <h3 class="font-bold text-charcoal text-base">Warung Sudi Mampir</h3>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-accent text-sm" style="font-variation-settings:'FILL' 1">star</span>
+              <span class="text-sm font-bold text-charcoal">4.8</span>
+            </div>
+          </div>
+          <p class="text-charcoal/50 text-xs mb-3 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">location_on</span>
+            Geylang · Malay · Indonesian
+          </p>
+          <div class="flex items-center justify-between">
+            <span class="text-charcoal/50 text-xs">$  · Open now</span>
+            <span class="text-xs text-primary font-semibold flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">schedule</span>7am – 11pm
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 — Featured -->
+      <div class="bg-white rounded-xl border-2 border-accent hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden cursor-pointer relative">
+        <div class="absolute top-0 right-0 bg-accent text-charcoal text-xs font-bold px-3 py-1 rounded-bl-lg z-10">Featured</div>
+        <div class="relative h-48 bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-6xl text-indigo-200">kebab_dining</span>
+          <div class="absolute top-3 left-3">
+            <span class="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">verified</span>MUIS Certified
+            </span>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-1">
+            <h3 class="font-bold text-charcoal text-base">Istanbul Grill House</h3>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-accent text-sm" style="font-variation-settings:'FILL' 1">star</span>
+              <span class="text-sm font-bold text-charcoal">4.6</span>
+            </div>
+          </div>
+          <p class="text-charcoal/50 text-xs mb-3 flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">location_on</span>
+            Orchard · Turkish · Mediterranean
+          </p>
+          <div class="flex items-center justify-between">
+            <span class="text-charcoal/50 text-xs">$$$  · Open now</span>
+            <span class="bg-accent/10 text-accent text-xs font-bold px-2 py-0.5 rounded-full">Delivery</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── MOSQUE CARD ───────────────────────────────────────── -->
+  <section class="bg-white border-t border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <p class="section-label">Mosque Cards</p>
+      <h2 class="text-2xl font-extrabold text-charcoal mb-6">Nearby Mosques</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
+          <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-primary text-2xl">mosque</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-charcoal text-sm mb-0.5">Masjid Sultan</h3>
+            <p class="text-charcoal/50 text-xs flex items-center gap-1 mb-2">
+              <span class="material-symbols-outlined text-xs">location_on</span>Kampong Glam
+            </p>
+            <div class="flex gap-1 flex-wrap">
+              <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">Wheelchair</span>
+              <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">Prayer room</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
+          <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-primary text-2xl">mosque</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-charcoal text-sm mb-0.5">Masjid Al-Istiqamah</h3>
+            <p class="text-charcoal/50 text-xs flex items-center gap-1 mb-2">
+              <span class="material-symbols-outlined text-xs">location_on</span>Bishan
+            </p>
+            <div class="flex gap-1 flex-wrap">
+              <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">Parking</span>
+              <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">Wudu'</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
+          <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-primary text-2xl">mosque</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-charcoal text-sm mb-0.5">Masjid Darul Aman</h3>
+            <p class="text-charcoal/50 text-xs flex items-center gap-1 mb-2">
+              <span class="material-symbols-outlined text-xs">location_on</span>Tampines
+            </p>
+            <div class="flex gap-1 flex-wrap">
+              <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">Childcare</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── EVENTS CARD ───────────────────────────────────────── -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <p class="section-label">Event Cards</p>
+    <h2 class="text-2xl font-extrabold text-charcoal mb-6">Upcoming Events</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden cursor-pointer flex">
+        <div class="w-24 bg-primary flex flex-col items-center justify-center text-white shrink-0 p-4">
+          <span class="text-xs font-bold opacity-80">MAR</span>
+          <span class="text-3xl font-extrabold leading-none">15</span>
+          <span class="text-xs opacity-70">SAT</span>
+        </div>
+        <div class="p-4 flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-emerald-50 text-primary text-xs font-bold px-2.5 py-0.5 rounded-full">Free</span>
+            <span class="text-charcoal/40 text-xs">10:00 AM</span>
+          </div>
+          <h3 class="font-bold text-charcoal text-sm mb-1">Ramadan Bazaar 2026 — Geylang Serai</h3>
+          <p class="text-charcoal/50 text-xs flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">location_on</span>Geylang Serai Market
+          </p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden cursor-pointer flex">
+        <div class="w-24 bg-accent flex flex-col items-center justify-center text-charcoal shrink-0 p-4">
+          <span class="text-xs font-bold opacity-80">MAR</span>
+          <span class="text-3xl font-extrabold leading-none">22</span>
+          <span class="text-xs opacity-70">SAT</span>
+        </div>
+        <div class="p-4 flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-0.5 rounded-full">$25</span>
+            <span class="text-charcoal/40 text-xs">7:00 PM</span>
+          </div>
+          <h3 class="font-bold text-charcoal text-sm mb-1">Muslim Entrepreneurs Summit 2026</h3>
+          <p class="text-charcoal/50 text-xs flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">location_on</span>Sands Expo Convention Centre
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CATEGORY PILLS ────────────────────────────────────── -->
+  <section class="bg-white border-t border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <p class="section-label">Navigation</p>
+      <h2 class="text-2xl font-extrabold text-charcoal mb-6">Category Pills</h2>
+      <div class="flex flex-wrap gap-2">
+        <button class="flex items-center gap-2 bg-primary text-white text-sm font-bold px-4 py-2.5 rounded-full transition-colors">
+          <span class="material-symbols-outlined text-base">restaurant</span>Restaurants
+        </button>
+        <button class="flex items-center gap-2 bg-white text-charcoal/70 text-sm font-semibold px-4 py-2.5 rounded-full border border-gray-200 hover:border-primary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-base">storefront</span>Businesses
+        </button>
+        <button class="flex items-center gap-2 bg-white text-charcoal/70 text-sm font-semibold px-4 py-2.5 rounded-full border border-gray-200 hover:border-primary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-base">event</span>Events
+        </button>
+        <button class="flex items-center gap-2 bg-white text-charcoal/70 text-sm font-semibold px-4 py-2.5 rounded-full border border-gray-200 hover:border-primary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-base">mosque</span>Mosques
+        </button>
+        <button class="flex items-center gap-2 bg-white text-charcoal/70 text-sm font-semibold px-4 py-2.5 rounded-full border border-gray-200 hover:border-primary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-base">flight</span>Travel
+        </button>
+        <button class="flex items-center gap-2 bg-white text-charcoal/70 text-sm font-semibold px-4 py-2.5 rounded-full border border-gray-200 hover:border-primary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-base">sell</span>Classifieds
+        </button>
+        <button class="flex items-center gap-2 bg-white text-charcoal/70 text-sm font-semibold px-4 py-2.5 rounded-full border border-gray-200 hover:border-primary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-base">forum</span>Forum
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ────────────────────────────────────────────── -->
+  <footer class="bg-charcoal relative overflow-hidden">
+    <div class="islamic-pattern"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+        <!-- Brand -->
+        <div class="col-span-2 md:col-span-1">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-primary text-2xl">mosque</span>
+            <span class="text-xl">
+              <span class="font-extrabold text-white font-sans">Humble</span><span class="italic text-accent font-display">Halal</span>
+            </span>
+          </div>
+          <p class="text-white/40 text-sm leading-relaxed">Singapore's complete halal ecosystem. Find, discover, and connect with everything halal.</p>
+        </div>
+        <!-- Explore -->
+        <div>
+          <p class="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Explore</p>
+          <ul class="space-y-2.5 text-sm text-white/50">
+            <li><a href="#" class="hover:text-white transition-colors">Restaurants</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Businesses</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Mosques</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Prayer Rooms</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Travel</a></li>
+          </ul>
+        </div>
+        <!-- Community -->
+        <div>
+          <p class="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Community</p>
+          <ul class="space-y-2.5 text-sm text-white/50">
+            <li><a href="#" class="hover:text-white transition-colors">Events</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Classifieds</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Forum</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Blog</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Newsletter</a></li>
+          </ul>
+        </div>
+        <!-- Company -->
+        <div>
+          <p class="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Company</p>
+          <ul class="space-y-2.5 text-sm text-white/50">
+            <li><a href="#" class="hover:text-white transition-colors">About</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Advertise</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Privacy</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Terms</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Cookies</a></li>
+          </ul>
+        </div>
+      </div>
+      <!-- Bottom bar -->
+      <div class="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-white/30 text-xs">© 2026 HumbleHalal.com · Not affiliated with MUIS · Halal status must be independently verified.</p>
+        <div class="flex items-center gap-2">
+          <span class="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs">verified</span>MUIS Data
+          </span>
+          <span class="text-white/30 text-xs">Updated weekly</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  </div><!-- /pt-16 -->
+
+</body>
+</html>

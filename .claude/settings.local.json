@@ -71,7 +71,9 @@
       "Bash(ls /Users/robertnichols/Desktop/humblehalalv2/src/app/\\\\\\(dashboard\\\\\\)/dashboard/my-tickets/)",
       "Bash(git add src/app/\\\\\\(public\\\\\\)/travel/flights/ src/app/\\\\\\(public\\\\\\)/travel/hotels/[hotelId]/checkout/ src/app/\\\\\\(dashboard\\\\\\)/dashboard/my-bookings/ src/app/\\\\\\(dashboard\\\\\\)/dashboard/page.tsx src/app/api/travel/cancel/ src/app/api/travel/bookings/route.ts)",
       "Bash(git add src/app/\\\\\\(public\\\\\\)/travel/page.tsx src/app/\\\\\\(public\\\\\\)/travel/muslim-friendly-hotels/ src/app/admin/analytics/travel/)",
-      "Bash(git add src/components/layout/CookieConsent.tsx src/components/layout/AnalyticsProvider.tsx src/app/layout.tsx src/components/layout/Footer.tsx src/app/\\\\\\(public\\\\\\)/privacy/page.tsx src/app/\\\\\\(public\\\\\\)/cookies/page.tsx supabase/migrations/20260307000016_pdpa_compliance.sql src/app/api/cron/pii-purge/route.ts vercel.json src/app/\\\\\\(auth\\\\\\)/signup/page.tsx src/app/\\\\\\(auth\\\\\\)/signup/complete/page.tsx src/app/api/user/complete-signup/route.ts)"
+      "Bash(git add src/components/layout/CookieConsent.tsx src/components/layout/AnalyticsProvider.tsx src/app/layout.tsx src/components/layout/Footer.tsx src/app/\\\\\\(public\\\\\\)/privacy/page.tsx src/app/\\\\\\(public\\\\\\)/cookies/page.tsx supabase/migrations/20260307000016_pdpa_compliance.sql src/app/api/cron/pii-purge/route.ts vercel.json src/app/\\\\\\(auth\\\\\\)/signup/page.tsx src/app/\\\\\\(auth\\\\\\)/signup/complete/page.tsx src/app/api/user/complete-signup/route.ts)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/)",
+      "Bash(git add design/stitch/preview.html .claude/settings.local.json)"
     ],
     "additionalDirectories": [
       "/Users/robertnichols/Desktop/humblehalalv2/src/app/(public)/restaurant",
