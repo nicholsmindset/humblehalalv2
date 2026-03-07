@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { PageTracker } from "@/components/layout/PageTracker";
+import { CookieConsent } from "@/components/layout/CookieConsent";
+import { AnalyticsProvider } from "@/components/layout/AnalyticsProvider";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -48,8 +50,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <PageTracker />
-        {children}
+        <AnalyticsProvider>
+          <PageTracker />
+          {children}
+          <CookieConsent />
+        </AnalyticsProvider>
       </body>
     </html>
   );

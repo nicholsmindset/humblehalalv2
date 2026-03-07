@@ -68,7 +68,9 @@
       "Bash(ls /Users/robertnichols/Desktop/humblehalalv2/src/app/\\\\\\(public\\\\\\)/travel/bookings/[bookingId]/)",
       "Bash(git add src/lib/resend/send.ts src/lib/resend/emails/booking-confirmation.ts src/app/\\\\\\(public\\\\\\)/travel/bookings/ src/app/\\\\\\(public\\\\\\)/travel/hotels/[hotelId]/checkout/ src/app/api/travel/book/ src/app/api/travel/bookings/ src/app/api/travel/prebook/ supabase/migrations/20260307000015_travel_bookings.sql)",
       "Bash(ls /Users/robertnichols/Desktop/humblehalalv2/src/app/api/travel/cancel/[bookingId]/)",
-      "Bash(ls /Users/robertnichols/Desktop/humblehalalv2/src/app/\\\\\\(dashboard\\\\\\)/dashboard/my-tickets/)"
+      "Bash(ls /Users/robertnichols/Desktop/humblehalalv2/src/app/\\\\\\(dashboard\\\\\\)/dashboard/my-tickets/)",
+      "Bash(git add src/app/\\\\\\(public\\\\\\)/travel/flights/ src/app/\\\\\\(public\\\\\\)/travel/hotels/[hotelId]/checkout/ src/app/\\\\\\(dashboard\\\\\\)/dashboard/my-bookings/ src/app/\\\\\\(dashboard\\\\\\)/dashboard/page.tsx src/app/api/travel/cancel/ src/app/api/travel/bookings/route.ts)",
+      "Bash(git add src/app/\\\\\\(public\\\\\\)/travel/page.tsx src/app/\\\\\\(public\\\\\\)/travel/muslim-friendly-hotels/ src/app/admin/analytics/travel/)"
     ],
     "additionalDirectories": [
       "/Users/robertnichols/Desktop/humblehalalv2/src/app/(public)/restaurant",
@@ -76,7 +78,8 @@
       "/Users/robertnichols/Desktop/humblehalalv2/src/app/(dashboard)/dashboard/my-events/[eventId]",
       "/Users/robertnichols/Desktop/humblehalalv2/src/app/(public)/community",
       "/Users/robertnichols/Desktop/humblehalalv2/src/app/api/travel/bookings",
-      "/Users/robertnichols/Desktop/humblehalalv2/src/app/api/travel/cancel/[bookingId]"
+      "/Users/robertnichols/Desktop/humblehalalv2/src/app/api/travel/cancel/[bookingId]",
+      "/Users/robertnichols/Desktop/humblehalalv2/src/app/(public)/travel/muslim-friendly-hotels"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { IslamicPattern } from './IslamicPattern'
+import { CookiePreferencesButton } from './CookieConsent'
 
 const columns = [
   {
@@ -101,9 +102,12 @@ export function Footer() {
             MUIS (Majlis Ugama Islam Singapura) for the latest certification status.
             HumbleHalal is not affiliated with MUIS.
           </p>
-          <p className="text-white/30 text-xs">
-            © {new Date().getFullYear()} HumbleHalal.sg · All rights reserved.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-white/30 text-xs">
+              © {new Date().getFullYear()} HumbleHalal.sg · All rights reserved.
+            </p>
+            <CookiePreferencesButton />
+          </div>
         </div>
       </div>
     </footer>
