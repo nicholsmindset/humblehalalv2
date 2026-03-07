@@ -36,7 +36,7 @@ export default async function CommunityPage({ searchParams }: Props) {
   let query = (supabase as any)
     .from('forum_posts')
     .select(
-      'id, slug, title, category, tags, view_count, reply_count, is_pinned, created_at, user_id',
+      'id, slug, title, category, tags, view_count, reply_count, is_pinned, created_at, user_id, user_profiles(display_name)',
       { count: 'exact' }
     )
     .eq('moderation_status', 'approved')
@@ -199,6 +199,7 @@ export default async function CommunityPage({ searchParams }: Props) {
                           <span className="material-symbols-outlined text-xs">visibility</span>
                           {(post.view_count ?? 0).toLocaleString()}
                         </span>
+                        <span>{post.user_profiles?.display_name ?? 'Anonymous'}</span>
                         <span>{timeAgo(post.created_at)}</span>
                       </div>
                     </div>
