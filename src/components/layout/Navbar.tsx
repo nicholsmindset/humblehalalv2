@@ -1,6 +1,10 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import SearchBar from '@/components/search/SearchBar'
 
 const navLinks = [
   { label: 'Restaurants', href: '/halal-food' },
@@ -12,9 +16,12 @@ const navLinks = [
 ]
 
 export function Navbar() {
+  const [searchOpen, setSearchOpen] = useState(false)
+
   return (
     <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-primary/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Main nav row */}
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -40,8 +47,15 @@ export function Navbar() {
 
           {/* Desktop right actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="icon" aria-label="Search">
-              <span className="material-symbols-outlined text-charcoal">search</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Toggle search"
+              onClick={() => setSearchOpen((v) => !v)}
+            >
+              <span className="material-symbols-outlined text-charcoal">
+                {searchOpen ? 'close' : 'search'}
+              </span>
             </Button>
             <Link
               href="/login"
@@ -61,6 +75,10 @@ export function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
                 <nav className="flex flex-col gap-4 mt-8" aria-label="Mobile navigation">
+                  <SearchBar
+                    placeholder="Search halal food, mosques…"
+                    className="mb-2"
+                  />
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -81,6 +99,16 @@ export function Navbar() {
             </Sheet>
           </div>
         </div>
+
+        {/* Desktop expandable search bar */}
+        {searchOpen && (
+          <div className="pb-3 hidden md:block">
+            <SearchBar
+              placeholder="Search halal restaurants, mosques, events…"
+              className="max-w-2xl mx-auto"
+            />
+          </div>
+        )}
       </div>
     </header>
   )
