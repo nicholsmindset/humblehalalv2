@@ -57,6 +57,13 @@ export default async function ListingsPage({ searchParams }: Props) {
           <h1 className="text-2xl font-extrabold text-white">Listings</h1>
           <p className="text-white/40 text-sm mt-1">{(count ?? 0).toLocaleString()} total listings</p>
         </div>
+        <Link
+          href="/admin/listings/import"
+          className="bg-accent text-charcoal rounded-lg px-5 py-2.5 text-sm font-bold hover:bg-accent/90 transition-colors flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-sm">upload_file</span>
+          Import Listings
+        </Link>
       </div>
 
       {/* Filters */}
