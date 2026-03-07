@@ -1,0 +1,264 @@
+'use client'
+
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { HotelSearchBar } from '@/components/travel/HotelSearchBar'
+import { HotelCard } from '@/components/travel/HotelCard'
+import type { MuslimEnrichment } from '@/lib/liteapi/enrich'
+import Link from 'next/link'
+
+interface Hotel {
+  hotelId?: string
+  id?: string
+  name: string
+  starRating?: number
+  hotelImages?: { url: string }[]
+  rates?: { retailRate?: { total?: [{ amount: number; currency: string }] }; cancellationPolicies?: { cancelPolicyInfos?: { policy: string }[] } }[]
+  location?: { city?: string; address?: string }
+  guestReviews?: { rating?: number; count?: number }
+  muslimEnrichment: MuslimEnrichment | null
+}
+
+function HotelSearchContent() {
+  const searchParams = useSearchParams()
+  const dest = searchParams.get('dest') ?? ''
+  const checkin = searchParams.get('checkin') ?? ''
+  const checkout = searchParams.get('checkout') ?? ''
+  const guestsParam = parseInt(searchParams.get('guests') ?? '2')
+
+  const [hotels, setHotels] = useState<Hotel[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [muslimOnly, setMuslimOnly] = useState(false)
+  const [minStars, setMinStars] = useState(0)
+  const [sortBy, setSortBy] = useState<'price' | 'rating' | 'muslim'>('price')
+
+  const search = useCallback(async () => {
+    if (!dest || !checkin || !checkout) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/travel/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination: dest,
+          checkin,
+          checkout,
+          guests: [{ adults: guestsParam, children: 0, childAges: [] }],
+        }),
+      })
+      if (!res.ok) throw new Error('Search failed')
+      const data = await res.json()
+      setHotels(data.hotels ?? [])
+    } catch {
+      setError('Hotel search failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [dest, checkin, checkout, guestsParam])
+
+  useEffect(() => { search() }, [search])
+
+  // Filter + sort
+  const filtered = hotels
+    .filter((h) => {
+      if (muslimOnly && (!h.muslimEnrichment || h.muslimEnrichment.muslimFriendlyScore < 3)) return false
+      if (minStars && (h.starRating ?? 0) < minStars) return false
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === 'muslim') {
+        return (b.muslimEnrichment?.muslimFriendlyScore ?? 0) - (a.muslimEnrichment?.muslimFriendlyScore ?? 0)
+      }
+      if (sortBy === 'rating') {
+        return (b.guestReviews?.rating ?? 0) - (a.guestReviews?.rating ?? 0)
+      }
+      // price
+      const priceA = a.rates?.[0]?.retailRate?.total?.[0]?.amount ?? Infinity
+      const priceB = b.rates?.[0]?.retailRate?.total?.[0]?.amount ?? Infinity
+      return priceA - priceB
+    })
+
+  const passThrough = searchParams.toString()
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Search bar */}
+      <div className="mb-8">
+        <HotelSearchBar
+          defaultDestination={dest}
+          defaultCheckin={checkin}
+          defaultCheckout={checkout}
+          defaultGuests={guestsParam}
+        />
+      </div>
+
+      <div className="flex gap-6">
+        {/* Filters sidebar */}
+        <aside className="hidden lg:block w-56 flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-24 space-y-5">
+            <h2 className="font-bold text-charcoal text-sm">Filters</h2>
+
+            {/* Muslim-friendly toggle */}
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={muslimOnly}
+                  onChange={(e) => setMuslimOnly(e.target.checked)}
+                  className="accent-primary"
+                />
+                <span className="text-sm text-charcoal font-semibold">Muslim-Friendly Only</span>
+              </label>
+              <p className="text-xs text-charcoal/40 mt-1 ml-5">Score ≥ 3/5</p>
+            </div>
+
+            {/* Star rating */}
+            <div>
+              <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Min. Stars</p>
+              <div className="flex gap-1">
+                {[0, 3, 4, 5].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setMinStars(s)}
+                    className={`flex-1 py-1 rounded-lg text-xs font-bold border transition-colors ${
+                      minStars === s
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white text-charcoal/60 border-gray-200 hover:border-primary/40'
+                    }`}
+                  >
+                    {s === 0 ? 'All' : `${s}★`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort */}
+            <div>
+              <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Sort by</p>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary bg-white"
+              >
+                <option value="price">Lowest price</option>
+                <option value="rating">Best rated</option>
+                <option value="muslim">Most Muslim-friendly</option>
+              </select>
+            </div>
+          </div>
+        </aside>
+
+        {/* Results */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              {dest && (
+                <h1 className="text-xl font-extrabold text-charcoal">
+                  Hotels in {dest}
+                </h1>
+              )}
+              {!loading && (
+                <p className="text-sm text-charcoal/50">
+                  {filtered.length} {filtered.length === 1 ? 'hotel' : 'hotels'} found
+                  {checkin && checkout && ` · ${checkin} — ${checkout}`}
+                </p>
+              )}
+            </div>
+            {/* Flight affiliate nudge */}
+            <Link
+              href="/travel/flights"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-primary font-semibold border border-primary/20 rounded-full px-3 py-1.5 hover:bg-emerald-50 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">flight</span>
+              Need flights?
+            </Link>
+          </div>
+
+          {loading && (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-40 bg-gray-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {error && !loading && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+              <p className="text-red-600 text-sm">{error}</p>
+              <button
+                onClick={search}
+                className="mt-3 text-sm text-primary font-semibold hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filtered.length === 0 && hotels.length > 0 && (
+            <div className="text-center py-12 text-charcoal/50">
+              <span className="material-symbols-outlined text-4xl block mb-2">filter_alt_off</span>
+              <p className="font-semibold">No hotels match your filters</p>
+              <button onClick={() => { setMuslimOnly(false); setMinStars(0) }} className="mt-2 text-sm text-primary hover:underline">
+                Clear filters
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && !dest && (
+            <div className="text-center py-16 text-charcoal/40">
+              <span className="material-symbols-outlined text-5xl block mb-3">travel_explore</span>
+              <p className="text-lg font-semibold">Search for Muslim-friendly hotels</p>
+              <p className="text-sm mt-1">Enter a destination to see hotels with halal food, mosques, and prayer rooms nearby</p>
+            </div>
+          )}
+
+          {!loading && !error && filtered.length > 0 && (
+            <div className="space-y-4">
+              {filtered.map((h) => {
+                const id = h.hotelId ?? h.id ?? ''
+                const rate = h.rates?.[0]
+                const price = rate?.retailRate?.total?.[0]
+                const cancellation = rate?.cancellationPolicies?.cancelPolicyInfos?.[0]?.policy
+                return (
+                  <HotelCard
+                    key={id}
+                    hotelId={id}
+                    name={h.name}
+                    stars={h.starRating ?? 0}
+                    imageUrl={h.hotelImages?.[0]?.url ?? null}
+                    pricePerNight={price ? price.amount : null}
+                    currency={price?.currency ?? 'SGD'}
+                    city={h.location?.city ?? ''}
+                    address={h.location?.address ?? ''}
+                    reviewRating={h.guestReviews?.rating ?? null}
+                    reviewCount={h.guestReviews?.count ?? null}
+                    isRefundable={cancellation?.toLowerCase().includes('free') ?? false}
+                    muslimEnrichment={h.muslimEnrichment}
+                    searchParams={passThrough}
+                  />
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function HotelSearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center text-charcoal/40">
+        <span className="material-symbols-outlined text-4xl block mb-2 animate-pulse">travel_explore</span>
+        <p>Loading hotels…</p>
+      </div>
+    }>
+      <HotelSearchContent />
+    </Suspense>
+  )
+}
