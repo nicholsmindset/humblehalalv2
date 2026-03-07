@@ -202,14 +202,14 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white">Analytics</h1>
           <p className="text-white/50 text-sm mt-1">Engagement & demand intelligence</p>
         </div>
 
         {/* Date range tabs */}
-        <div className="flex gap-1 bg-white/10 rounded-lg p-1">
+        <div className="flex gap-1 bg-white/10 rounded-lg p-1 overflow-x-auto">
           {(Object.entries(RANGES) as [RangeKey, typeof RANGES[RangeKey]][]).map(([key, { label }]) => (
             <a
               key={key}

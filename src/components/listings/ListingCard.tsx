@@ -61,7 +61,7 @@ export function ListingCard({
     <Link
       href={href}
       onClick={handleView}
-      className="group bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden flex flex-col"
+      className="group bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden flex flex-col touch-feedback"
     >
       {/* Photo */}
       <div className="relative h-44 bg-gray-100 overflow-hidden">
