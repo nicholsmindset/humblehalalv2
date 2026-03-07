@@ -1,0 +1,52 @@
+import type { Metadata } from "next";
+import { Manrope, Playfair_Display } from "next/font/google";
+import "./globals.css";
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["italic"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: {
+    default: "HumbleHalal — Singapore's Halal Ecosystem",
+    template: "%s | HumbleHalal",
+  },
+  description:
+    "Singapore's all-in-one halal ecosystem: restaurants, Muslim businesses, events, classifieds, mosque finder, travel guides, and community forum.",
+  metadataBase: new URL("https://humblehalal.sg"),
+  openGraph: {
+    type: "website",
+    locale: "en_SG",
+    url: "https://humblehalal.sg",
+    siteName: "HumbleHalal",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={`${manrope.variable} ${playfairDisplay.variable}`}>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        />
+      </head>
+      <body className="font-sans antialiased">{children}</body>
+    </html>
+  );
+}
