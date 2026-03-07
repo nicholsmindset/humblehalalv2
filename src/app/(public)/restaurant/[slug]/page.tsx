@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { MuisBadge } from '@/components/ui/MuisBadge'
 import { HalalStatus, HALAL_STATUS_LABELS, ISR_REVALIDATE } from '@/config'
 import { ListingActions } from '@/components/listings/ListingActions'
+import { ReviewForm } from '@/components/reviews/ReviewForm'
+import { ReviewsList } from '@/components/reviews/ReviewsList'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -64,6 +66,9 @@ export default async function RestaurantPage({ params }: Props) {
   const PRICE_LABELS: Record<number, string> = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' }
   const halalLabel = HALAL_STATUS_LABELS[listing.halal_status as HalalStatus]
   const isMuis = listing.halal_status === HalalStatus.MuisCertified
+
+  // Check if current user is logged in for review form
+  const { data: { user } } = await supabase.auth.getUser()
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -191,6 +196,26 @@ export default async function RestaurantPage({ params }: Props) {
           />
         </aside>
       </div>
+
+      {/* ── Reviews ─────────────────────────────────────────────── */}
+      <section className="mt-12 pt-10 border-t border-gray-100">
+        <h2 className="text-xl font-bold text-charcoal mb-6">
+          Reviews
+          {listing.review_count > 0 && (
+            <span className="text-charcoal/40 font-normal text-base ml-2">
+              ({listing.review_count})
+            </span>
+          )}
+        </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <ReviewForm
+            listingId={listing.id}
+            listingName={listing.name}
+            isLoggedIn={!!user}
+          />
+          <ReviewsList listingId={listing.id} />
+        </div>
+      </section>
 
       {/* JSON-LD */}
       <script
