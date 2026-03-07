@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       rating,
       title: title?.slice(0, 120) || null,
       body: reviewBody.slice(0, 2000),
-      status: 'active' as const,
+      status: 'pending' as const,
     } as any)
     .select('id')
     .single()) as any
