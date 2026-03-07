@@ -1,0 +1,14 @@
+{
+  "crons": [
+    { "path": "/api/cron/muis-sync",       "schedule": "0 18 * * 0" },
+    { "path": "/api/cron/places-refresh",  "schedule": "0 20 1 * *" },
+    { "path": "/api/cron/freshness-check", "schedule": "0 19 * * 1" },
+    { "path": "/api/cron/closure-detect",  "schedule": "0 20 15 * *" },
+    { "path": "/api/cron/newsletter-draft","schedule": "0 22 * * 3" },
+    { "path": "/api/cron/seo-audit",       "schedule": "0 21 * * *" },
+    { "path": "/api/cron/gsc-pull",        "schedule": "0 22 * * *" },
+    { "path": "/api/cron/ahrefs-pull",     "schedule": "0 22 * * 1" },
+    { "path": "/api/cron/morning-briefing","schedule": "0 23 * * *" },
+    { "path": "/api/cron/analytics-rollup","schedule": "0 17 * * *" }
+  ]
+}
