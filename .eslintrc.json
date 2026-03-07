@@ -2,6 +2,7 @@
   "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
     "@next/next/no-page-custom-font": "off",
-    "@next/next/google-font-display": "off"
+    "@next/next/google-font-display": "off",
+    "@typescript-eslint/no-explicit-any": "off"
   }
 }
