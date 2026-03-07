@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkLimit, searchLimiter, getIdentifier } from '@/lib/security/rate-limit'
 
 const MAX_RESULTS_PER_VERTICAL = 5
 
 export async function GET(request: NextRequest) {
+  const rl = await checkLimit(searchLimiter, getIdentifier(request))
+  if (rl.limited) return rl.response
+
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')?.trim()
   const vertical = searchParams.get('vertical') // optional filter

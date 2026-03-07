@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkLimit, forumLimiter, getIdentifier } from '@/lib/security/rate-limit'
+import { verifyCaptcha } from '@/lib/security/captcha'
+import { sanitiseHTML, sanitisePlainText } from '@/lib/security/sanitise'
 
 function slugify(text: string): string {
   return text
@@ -29,22 +32,32 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Sign in to post' }, { status: 401 })
 
+  const rl = await checkLimit(forumLimiter, getIdentifier(request, user.id))
+  if (rl.limited) return rl.response
+
   const body = await request.json()
-  const { title, body: postBody, category, tags } = body
+  const { title, body: postBody, category, tags, captchaToken } = body
+
+  if (!await verifyCaptcha(captchaToken)) {
+    return NextResponse.json({ error: 'CAPTCHA verification failed' }, { status: 400 })
+  }
 
   if (!title?.trim() || !postBody?.trim() || !category) {
     return NextResponse.json({ error: 'Title, body, and category are required' }, { status: 400 })
   }
 
-  const baseSlug = slugify(title)
+  const cleanTitle = sanitisePlainText(title).trim().slice(0, 200)
+  const cleanBody = sanitiseHTML(postBody)
+
+  const baseSlug = slugify(cleanTitle)
   const slug = await uniqueSlug(db, baseSlug)
 
   const { data: post, error } = await db
     .from('forum_posts')
     .insert({
       slug,
-      title: title.trim(),
-      body: postBody.trim(),
+      title: cleanTitle,
+      body: cleanBody,
       category,
       tags: Array.isArray(tags) ? tags : [],
       user_id: user.id,

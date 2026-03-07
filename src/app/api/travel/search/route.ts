@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getLiteApiClient } from '@/lib/liteapi/client'
 import { enrichHotels, type HotelLocation } from '@/lib/liteapi/enrich'
 import { createClient } from '@supabase/supabase-js'
+import { checkLimit, travelSearchLimiter, getIdentifier } from '@/lib/security/rate-limit'
 
 const MARGIN = 12 // 12% commission margin — adjust in production
 
 export async function POST(request: NextRequest) {
+  const rl = await checkLimit(travelSearchLimiter, getIdentifier(request))
+  if (rl.limited) return rl.response
+
   const body = await request.json()
   const { destination, checkin, checkout, guests, currency = 'SGD' } = body
 

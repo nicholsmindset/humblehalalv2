@@ -3,8 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 import { getLiteApiClient } from '@/lib/liteapi/client'
 import { sendBookingConfirmation } from '@/lib/resend/send'
 import { SITE_URL } from '@/config'
+import { checkLimit, travelBookLimiter, getIdentifier } from '@/lib/security/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const rl = await checkLimit(travelBookLimiter, getIdentifier(request))
+  if (rl.limited) return rl.response
+
   const body = await request.json()
   const { bookingId, prebookId, transactionId, holderFirstName, holderLastName, holderEmail, holderPhone } = body
 

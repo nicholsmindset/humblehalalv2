@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getLiteApiClient } from '@/lib/liteapi/client'
+import { checkLimit, travelBookLimiter, getIdentifier } from '@/lib/security/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const rl = await checkLimit(travelBookLimiter, getIdentifier(request))
+  if (rl.limited) return rl.response
+
   const body = await request.json()
   const {
     offerId,
