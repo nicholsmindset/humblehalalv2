@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 import { SITE_URL } from '@/config'
+import { sendTicketConfirmation } from '@/lib/resend/send'
 
 function generateOrderNumber(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
   // Load event
   const { data: evt } = (await db
     .from('events')
-    .select('id, slug, title, is_ticketed, platform_fee_percent, organiser_stripe_account_id, starts_at')
+    .select('id, slug, title, is_ticketed, platform_fee_percent, organiser_stripe_account_id, starts_at, venue, area, is_online, online_platform')
     .eq('id', event_id)
     .eq('status', 'active')
     .single()) as any
@@ -126,6 +127,30 @@ export async function POST(request: NextRequest) {
       }
     }
     await db.from('event_order_items').insert(itemInserts)
+
+    // Send confirmation email for free orders
+    const startDate = new Date(evt.starts_at)
+    await sendTicketConfirmation({
+      orderNumber,
+      attendeeName: attendee_name,
+      attendeeEmail: attendee_email,
+      eventTitle: evt.title,
+      eventSlug: evt.slug,
+      eventDate: startDate.toLocaleDateString('en-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      eventTime: startDate.toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+      venue: evt.venue ?? null,
+      area: evt.area ?? null,
+      isOnline: !!evt.is_online,
+      onlinePlatform: evt.online_platform ?? null,
+      tickets: itemInserts.map((item: any) => ({
+        id: item.ticket_id,
+        qrCode: item.qr_code,
+        ticketName: tickets[item.ticket_id]?.name ?? 'Ticket',
+        attendeeName: item.attendee_name,
+        price: 0,
+      })),
+    })
+
     return NextResponse.json({
       free: true,
       redirect_url: `${SITE_URL}/events/${evt.slug}/confirmation/${order.id}`,

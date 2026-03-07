@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
+import { sendTicketConfirmation } from '@/lib/resend/send'
 
 export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
@@ -108,13 +109,48 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .eq('id', order.event_id)
     .catch(() => {})  // raw not available — best effort
 
-  // Schedule email reminders (24h + 1h before event)
+  // Fetch event details for emails
   const { data: evt } = (await db
     .from('events')
-    .select('starts_at')
+    .select('slug, title, starts_at, ends_at, venue, area, is_online, online_platform, online_link')
     .eq('id', order.event_id)
     .single()) as any
 
+  // Send ticket confirmation email
+  if (evt && itemInserts.length > 0) {
+    // Fetch ticket names for email
+    const ticketIdSet = Array.from(new Set(itemInserts.map((i: any) => i.ticket_id))) as string[]
+    const { data: ticketRows } = (await db
+      .from('event_tickets')
+      .select('id, name, price')
+      .in('id', ticketIdSet)) as any
+    const ticketMap: Record<string, any> = {}
+    for (const t of (ticketRows ?? [])) ticketMap[t.id] = t
+
+    const startDate = new Date(evt.starts_at)
+    await sendTicketConfirmation({
+      orderNumber: order.order_number ?? orderId.slice(0, 8).toUpperCase(),
+      attendeeName: attendeeName,
+      attendeeEmail: order.email,
+      eventTitle: evt.title,
+      eventSlug: evt.slug,
+      eventDate: startDate.toLocaleDateString('en-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      eventTime: startDate.toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+      venue: evt.venue ?? null,
+      area: evt.area ?? null,
+      isOnline: !!evt.is_online,
+      onlinePlatform: evt.online_platform ?? null,
+      tickets: itemInserts.map((item: any) => ({
+        id: item.ticket_id,
+        qrCode: item.qr_code,
+        ticketName: ticketMap[item.ticket_id]?.name ?? 'Ticket',
+        attendeeName: item.attendee_name,
+        price: ticketMap[item.ticket_id]?.price ?? 0,
+      })),
+    })
+  }
+
+  // Schedule reminders (24h + 1h before event)
   if (evt?.starts_at) {
     const startTime = new Date(evt.starts_at).getTime()
     const reminder24h = new Date(startTime - 24 * 60 * 60 * 1000)
