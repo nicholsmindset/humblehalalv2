@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SITE_URL } from '@/config'
 import { ReplyForm } from '@/components/forum/ReplyForm'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -197,6 +198,13 @@ export default async function ForumPostPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Community', href: '/community' },
+        ...(post.category ? [{ name: post.category.replace(/-/g, ' '), href: `/community?category=${post.category}` }] : []),
+        { name: post.title },
+      ]} />
 
       <script
         type="application/ld+json"

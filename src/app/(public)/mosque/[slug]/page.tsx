@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE } from '@/config'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
@@ -167,6 +168,13 @@ export default async function MosqueDetailPage({ params }: Props) {
           </div>
         </aside>
       </div>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Mosques', href: '/mosque' },
+        { name: mosque.area?.replace(/-/g, ' ') ?? 'Singapore', href: `/mosque?area=${mosque.area}` },
+        { name: mosque.name },
+      ]} />
 
       {/* JSON-LD */}
       <script

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE } from '@/config'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -164,6 +165,11 @@ export default async function EventsPage({ searchParams }: Props) {
           )}
         </>
       )}
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Events' },
+      ]} />
 
       {/* JSON-LD */}
       <script

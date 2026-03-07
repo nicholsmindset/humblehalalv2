@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SITE_URL } from '@/config'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
@@ -126,6 +127,13 @@ export default async function BlogPostPage({ params }: Props) {
           Back to blog
         </Link>
       </footer>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Blog', href: '/blog' },
+        ...(post.vertical ? [{ name: post.vertical, href: `/blog?vertical=${post.vertical}` }] : []),
+        { name: title },
+      ]} />
 
       {/* JSON-LD */}
       <script

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 // Revalidate every hour — prayer times change daily
 export const revalidate = 3600
@@ -208,6 +209,11 @@ export default async function PrayerTimesSingaporePage() {
           </div>
         </Link>
       </div>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Prayer Times Singapore' },
+      ]} />
 
       {/* JSON-LD */}
       <script

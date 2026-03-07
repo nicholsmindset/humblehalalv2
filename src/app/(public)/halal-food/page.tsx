@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ListingCard } from '@/components/listings/ListingCard'
 import { ISR_REVALIDATE, HalalStatus, SingaporeArea } from '@/config'
 import type { ListingCardProps } from '@/components/listings/ListingCard'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -212,6 +213,11 @@ export default async function HalalFoodPage({ searchParams }: Props) {
           ))}
         </div>
       </section>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Halal Food' },
+      ]} />
 
       {/* JSON-LD */}
       <script
