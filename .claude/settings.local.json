@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init)",
+      "Bash(git remote add origin https://github.com/nicholsmindset/humblehalalv2.git)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npx shadcn@latest add button card badge input label select textarea dialog sheet dropdown-menu navigation-menu tabs tooltip separator skeleton avatar --yes)",
+      "Bash(npx supabase init --workdir /Users/robertnichols/Desktop/humblehalalv2)",
+      "Bash(sed -i '' 's|site_url = \"\"http://127.0.0.1:3000\"\"|site_url = \"\"https://humblehalal.sg\"\"|' supabase/config.toml)",
+      "Bash(sed -i '' 's|additional_redirect_urls = \\\\[\"\"https://127.0.0.1:3000\"\"\\\\]|additional_redirect_urls = [\"\"http://localhost:3000/**\"\", \"\"http://127.0.0.1:3000/**\"\"]|' supabase/config.toml)",
+      "Bash(sed -i '' 's|enable_confirmations = false|enable_confirmations = true|' supabase/config.toml)",
+      "Bash(supabase/config.toml:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(git add package.json tsconfig.json next.config.ts postcss.config.js .eslintrc.json prettier.config.js components.json next-env.d.ts .gitignore .env.local.example tailwind.config.ts src/ design/ docs/ supabase/)",
+      "Bash(git add package.json tsconfig.json next.config.ts postcss.config.js .eslintrc.json prettier.config.js components.json .gitignore .env.local.example tailwind.config.ts src/ design/ docs/ supabase/)",
+      "Bash(git commit:*)",
+      "Bash(npx supabase db reset)",
+      "Bash(psql --version)",
+      "Bash(git add supabase/migrations/ supabase/seed.sql)",
+      "Bash(docker info)",
+      "Bash(npx supabase status)",
+      "Bash(psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c \":*)",
+      "Bash(python3 -c \":*)",
+      "Bash(docker exec supabase_db_humblehalalv2 psql -U postgres -d postgres -c \":*)",
+      "Bash(git add -A)"
+    ]
+  }
+}
