@@ -49,6 +49,18 @@ export default async function DashboardPage() {
             description="Update your profile and preferences"
             href="/dashboard/settings"
           />
+          <DashCard
+            icon="confirmation_number"
+            label="My Tickets"
+            description="Event tickets and QR codes"
+            href="/dashboard/my-tickets"
+          />
+          <DashCard
+            icon="hotel"
+            label="My Hotel Bookings"
+            description="Travel bookings and e-receipts"
+            href="/dashboard/my-bookings"
+          />
         </div>
 
         {profile?.is_admin && (
