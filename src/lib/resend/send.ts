@@ -9,6 +9,13 @@ import {
   eventReminderText,
   type EventReminderData,
 } from './emails/event-reminder'
+import {
+  bookingConfirmationHtml,
+  bookingConfirmationText,
+  type BookingConfirmationData,
+} from './emails/booking-confirmation'
+
+export type { BookingConfirmationData }
 
 export async function sendTicketConfirmation(data: TicketConfirmationData): Promise<void> {
   if (!process.env.RESEND_API_KEY) {
@@ -29,6 +36,28 @@ export async function sendTicketConfirmation(data: TicketConfirmationData): Prom
     }
   } catch (err) {
     console.error('[email] sendTicketConfirmation threw:', err)
+  }
+}
+
+export async function sendBookingConfirmation(data: BookingConfirmationData): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY not set — skipping booking confirmation')
+    return
+  }
+  try {
+    const resend = getResend()
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: data.holderEmail,
+      subject: `Booking confirmed: ${data.hotelName} · Ref ${data.confirmationCode}`,
+      html: bookingConfirmationHtml(data),
+      text: bookingConfirmationText(data),
+    })
+    if (error) {
+      console.error('[email] sendBookingConfirmation failed:', error)
+    }
+  } catch (err) {
+    console.error('[email] sendBookingConfirmation threw:', err)
   }
 }
 
