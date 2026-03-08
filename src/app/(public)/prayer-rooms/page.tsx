@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SingaporeArea } from '@/config'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
@@ -170,6 +171,11 @@ export default async function PrayerRoomsPage({ searchParams }: Props) {
           )}
         </>
       )}
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Prayer Rooms' },
+      ]} />
 
       {/* JSON-LD */}
       <script

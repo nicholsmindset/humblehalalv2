@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SITE_URL } from '@/config'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.STATIC
 
@@ -279,6 +280,13 @@ export default async function PrayerRoomDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Prayer Rooms', href: '/prayer-rooms' },
+        ...(room.area ? [{ name: room.area.replace(/-/g, ' '), href: `/prayer-rooms?area=${room.area}` }] : []),
+        { name: room.name },
+      ]} />
 
       {/* JSON-LD */}
       <script

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SITE_URL } from '@/config'
 import TicketSelector from '@/components/events/TicketSelector'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -245,6 +246,12 @@ export default async function EventDetailPage({ params }: Props) {
           </Link>
         </aside>
       </div>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Events', href: '/events' },
+        { name: evt.title },
+      ]} />
 
       {/* JSON-LD */}
       <script

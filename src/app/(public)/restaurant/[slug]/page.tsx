@@ -7,6 +7,7 @@ import { HalalStatus, HALAL_STATUS_LABELS, ISR_REVALIDATE } from '@/config'
 import { ListingActions } from '@/components/listings/ListingActions'
 import { ReviewForm } from '@/components/reviews/ReviewForm'
 import { ReviewsList } from '@/components/reviews/ReviewsList'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -222,6 +223,13 @@ export default async function RestaurantPage({ params }: Props) {
           <ReviewsList listingId={listing.id} />
         </div>
       </section>
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Halal Food', href: '/halal-food' },
+        { name: listing.area, href: `/halal-food?area=${listing.area.toLowerCase().replace(/\s+/g, '-')}` },
+        { name: listing.name },
+      ]} />
 
       {/* JSON-LD */}
       <script

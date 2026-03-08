@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE } from '@/config'
+import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -220,6 +221,13 @@ export default async function ClassifiedDetailPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      <BreadcrumbSchema items={[
+        { name: 'Home', href: '/' },
+        { name: 'Classifieds', href: '/classifieds' },
+        ...(item.category ? [{ name: item.category, href: `/classifieds?category=${item.category}` }] : []),
+        { name: item.title },
+      ]} />
 
       {/* JSON-LD */}
       <script
