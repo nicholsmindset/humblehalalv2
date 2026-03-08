@@ -57,6 +57,9 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  a, button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @layer utilities {
@@ -70,5 +73,9 @@
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .touch-feedback {
+    @apply active:scale-[0.97] active:opacity-80 transition-transform;
   }
 }

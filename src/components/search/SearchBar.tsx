@@ -153,7 +153,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
             <button
               type="button"
               onClick={() => { setQuery(''); setResults([]); setOpen(false); inputRef.current?.focus() }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 hover:text-charcoal transition-colors"
+              className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-charcoal/30 hover:text-charcoal transition-colors"
               aria-label="Clear search"
             >
               <span className="material-symbols-outlined text-xl">close</span>
@@ -167,7 +167,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
         <div
           id="search-dropdown"
           role="listbox"
-          className="absolute top-full mt-2 left-0 right-0 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden max-h-80 overflow-y-auto"
+          className="absolute top-full mt-2 left-0 right-0 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden max-h-[60vh] sm:max-h-80 overflow-y-auto overscroll-contain"
         >
           {results.map((group) => (
             <div key={group.vertical}>
@@ -187,7 +187,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
                     role="option"
                     aria-selected={active === globalIdx}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                       active === globalIdx ? 'bg-primary/5 text-primary' : 'text-charcoal hover:bg-gray-50'
                     }`}
                   >

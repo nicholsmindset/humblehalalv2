@@ -112,7 +112,7 @@ export default async function ListingsPage({ searchParams }: Props) {
       </form>
 
       {/* Table */}
-      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-white/5 border border-white/10 rounded-xl overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 text-white/40 text-xs font-medium uppercase tracking-wider">

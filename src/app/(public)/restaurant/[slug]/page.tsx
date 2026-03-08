@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { MuisBadge } from '@/components/ui/MuisBadge'
 import { HalalStatus, HALAL_STATUS_LABELS, ISR_REVALIDATE } from '@/config'
@@ -119,15 +120,20 @@ export default async function RestaurantPage({ params }: Props) {
 
       {/* Photos */}
       {listing.photos && listing.photos.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 rounded-xl overflow-hidden mb-8 h-56">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-xl overflow-hidden mb-8 h-48 sm:h-56">
           {listing.photos.slice(0, 3).map((url: string, i: number) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <div
               key={i}
-              src={url}
-              alt={`${listing.name} photo ${i + 1}`}
-              className={`object-cover w-full h-full ${i === 0 ? 'col-span-2 row-span-2' : ''}`}
-            />
+              className={`relative ${i === 0 ? 'sm:col-span-2 sm:row-span-2' : ''}`}
+            >
+              <Image
+                src={url}
+                alt={`${listing.name} photo ${i + 1}`}
+                fill
+                className="object-cover"
+                sizes={i === 0 ? '(max-width: 640px) 100vw, 66vw' : '(max-width: 640px) 100vw, 33vw'}
+              />
+            </div>
           ))}
         </div>
       )}

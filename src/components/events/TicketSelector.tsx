@@ -137,7 +137,7 @@ export default function TicketSelector({ eventId, tickets, isPast }: Props) {
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="Your full name"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base sm:text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
         <div>
@@ -148,7 +148,7 @@ export default function TicketSelector({ eventId, tickets, isPast }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="your@email.com"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base sm:text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
         <div>
@@ -158,7 +158,7 @@ export default function TicketSelector({ eventId, tickets, isPast }: Props) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+65 9XXX XXXX"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base sm:text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
@@ -235,17 +235,17 @@ export default function TicketSelector({ eventId, tickets, isPast }: Props) {
                     type="button"
                     onClick={() => setQty(ticket.id, -1)}
                     disabled={qty === 0}
-                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-charcoal hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                    className="w-11 h-11 rounded-lg border border-gray-200 flex items-center justify-center text-charcoal hover:bg-gray-100 disabled:opacity-30 transition-colors"
                     aria-label="Decrease"
                   >
                     <span className="material-symbols-outlined text-base">remove</span>
                   </button>
-                  <span className="w-6 text-center font-bold text-charcoal text-sm">{qty}</span>
+                  <span className="w-8 text-center font-bold text-charcoal text-sm">{qty}</span>
                   <button
                     type="button"
                     onClick={() => setQty(ticket.id, 1)}
                     disabled={qty >= Math.min(remaining, 10)}
-                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-charcoal hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                    className="w-11 h-11 rounded-lg border border-gray-200 flex items-center justify-center text-charcoal hover:bg-gray-100 disabled:opacity-30 transition-colors"
                     aria-label="Increase"
                   >
                     <span className="material-symbols-outlined text-base">add</span>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { HotelSearchBar } from '@/components/travel/HotelSearchBar'
 import { HotelCard } from '@/components/travel/HotelCard'
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import type { MuslimEnrichment } from '@/lib/liteapi/enrich'
 import Link from 'next/link'
 
@@ -95,7 +96,7 @@ function HotelSearchContent() {
       </div>
 
       <div className="flex gap-6">
-        {/* Filters sidebar */}
+        {/* Filters sidebar — desktop */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
           <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-24 space-y-5">
             <h2 className="font-bold text-charcoal text-sm">Filters</h2>
@@ -141,7 +142,7 @@ function HotelSearchContent() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary bg-white"
+                className="w-full text-base sm:text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary bg-white"
               >
                 <option value="price">Lowest price</option>
                 <option value="rating">Best rated</option>
@@ -153,6 +154,76 @@ function HotelSearchContent() {
 
         {/* Results */}
         <div className="flex-1 min-w-0">
+          {/* Mobile filter button */}
+          <div className="lg:hidden mb-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="flex items-center gap-2 text-sm font-medium text-charcoal border border-gray-200 rounded-lg px-4 py-3 hover:bg-gray-50 transition-colors">
+                  <span className="material-symbols-outlined text-base">filter_list</span>
+                  Filters
+                  {(muslimOnly || minStars > 0) && (
+                    <span className="bg-primary text-white text-xs rounded-full px-2 py-0.5">Active</span>
+                  )}
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-2xl">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="space-y-5 pt-4">
+                  {/* Muslim-friendly toggle */}
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={muslimOnly}
+                        onChange={(e) => setMuslimOnly(e.target.checked)}
+                        className="accent-primary w-5 h-5"
+                      />
+                      <span className="text-sm text-charcoal font-semibold">Muslim-Friendly Only</span>
+                    </label>
+                    <p className="text-xs text-charcoal/40 mt-1 ml-7">Score ≥ 3/5</p>
+                  </div>
+
+                  {/* Star rating */}
+                  <div>
+                    <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Min. Stars</p>
+                    <div className="flex gap-2">
+                      {[0, 3, 4, 5].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setMinStars(s)}
+                          className={`flex-1 py-2.5 rounded-lg text-sm font-bold border transition-colors ${
+                            minStars === s
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-white text-charcoal/60 border-gray-200 hover:border-primary/40'
+                          }`}
+                        >
+                          {s === 0 ? 'All' : `${s}★`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sort */}
+                  <div>
+                    <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Sort by</p>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                      className="w-full text-base border border-gray-200 rounded-lg px-3 py-3 focus:outline-none focus:border-primary bg-white"
+                    >
+                      <option value="price">Lowest price</option>
+                      <option value="rating">Best rated</option>
+                      <option value="muslim">Most Muslim-friendly</option>
+                    </select>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div>
