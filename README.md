@@ -4,6 +4,18 @@ Singapore's all-in-one halal ecosystem — restaurants, businesses, mosques, eve
 
 **Live:** [humblehalal.sg](https://humblehalal.sg) &nbsp;|&nbsp; **Stack:** Next.js 14 · Supabase · Tailwind CSS · Vercel · Stripe · Anthropic Claude
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnicholsmindset%2Fhumblehalalv2&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ANTHROPIC_API_KEY&project-name=humblehalalv2&repository-name=humblehalalv2)
+
+### Preview Deployments
+
+Every pull request automatically generates a **Vercel Preview Deployment**. Look for the deployment link in the PR checks/comments after pushing to any branch.
+
+| Environment | URL |
+|-------------|-----|
+| Production | [humblehalal.sg](https://humblehalal.sg) |
+| Vercel Dashboard | [vercel.com/nicholsmindset/humblehalalv2](https://vercel.com/nicholsmindset/humblehalalv2) |
+| PR Previews | Auto-generated per PR — check PR comments for link |
+
 ---
 
 ## What It Is
