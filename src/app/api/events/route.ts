@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkLimit, contentLimiter, getIdentifier } from '@/lib/security/rate-limit'
+import { verifyCaptcha } from '@/lib/security/captcha'
+import { sanitiseHTML, sanitisePlainText } from '@/lib/security/sanitise'
 
 function slugify(text: string): string {
   return text
@@ -30,6 +33,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
+  // Rate limit: 3 events per hour per user
+  const rl = await checkLimit(contentLimiter, getIdentifier(request, user.id))
+  if (rl.limited) return rl.response
+
   const body = await request.json()
   const {
     title,
@@ -47,13 +54,26 @@ export async function POST(request: NextRequest) {
     tickets,
     refund_policy,
     refund_policy_text,
+    captchaToken,
   } = body
+
+  // CAPTCHA verification
+  if (!await verifyCaptcha(captchaToken)) {
+    return NextResponse.json({ error: 'CAPTCHA verification failed' }, { status: 400 })
+  }
 
   if (!title || !description || !category || !starts_at) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  const baseSlug = slugify(`${title}-${new Date(starts_at).getFullYear()}`)
+  // Sanitise user content
+  const cleanTitle = sanitisePlainText(title).trim().slice(0, 200)
+  const cleanDescription = sanitiseHTML(description)
+  const cleanOrganiser = organiser ? sanitisePlainText(organiser).trim().slice(0, 150) : null
+  const cleanVenue = venue ? sanitisePlainText(venue).trim().slice(0, 300) : null
+  const cleanOnlineLink = online_link ? sanitisePlainText(online_link).trim().slice(0, 500) : null
+
+  const baseSlug = slugify(`${cleanTitle}-${new Date(starts_at).getFullYear()}`)
   const slug = await uniqueSlug(db, baseSlug)
 
   const isOnline = event_format === 'online' || event_format === 'hybrid'
@@ -64,15 +84,15 @@ export async function POST(request: NextRequest) {
     .from('events')
     .insert({
       slug,
-      title,
-      description,
-      organiser: organiser || null,
-      venue: isInPerson ? venue : null,
+      title: cleanTitle,
+      description: cleanDescription,
+      organiser: cleanOrganiser,
+      venue: isInPerson ? cleanVenue : null,
       area: isInPerson ? area : null,
       is_online: isOnline,
       is_hybrid: isHybrid,
       online_platform: isOnline ? online_platform : null,
-      online_link: isOnline ? online_link : null,
+      online_link: isOnline ? cleanOnlineLink : null,
       starts_at,
       ends_at: ends_at || null,
       is_ticketed: !!is_ticketed,

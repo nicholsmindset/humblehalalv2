@@ -62,7 +62,7 @@ export default function HomePage() {
             and community classifieds — all in one place.
           </p>
 
-          {/* Search bar */}
+          {/* Search bar — text-base prevents iOS zoom on focus */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
             <div className="relative flex-1">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40">
@@ -71,12 +71,12 @@ export default function HomePage() {
               <input
                 type="search"
                 placeholder="Search halal restaurants, businesses…"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white text-charcoal placeholder-charcoal/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-10 pr-4 h-12 rounded-xl bg-white text-charcoal placeholder-charcoal/40 text-base focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <Link
               href="/halal-food"
-              className="bg-accent text-charcoal font-bold px-6 py-3 rounded-xl hover:bg-accent/90 transition-colors shrink-0 text-sm"
+              className="bg-accent text-charcoal font-bold px-6 h-12 rounded-xl hover:bg-accent/90 transition-colors shrink-0 text-sm flex items-center justify-center"
             >
               Search
             </Link>
@@ -88,7 +88,7 @@ export default function HomePage() {
               <Link
                 key={c.href}
                 href={c.href}
-                className="bg-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full hover:bg-white/20 transition-colors"
+                className="bg-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full hover:bg-white/20 transition-colors min-h-[36px] flex items-center"
               >
                 {c.label}
               </Link>
@@ -131,7 +131,7 @@ export default function HomePage() {
               <Link
                 key={cat.href}
                 href={cat.href}
-                className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col items-center text-center gap-2"
+                className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all p-5 flex flex-col items-center text-center gap-2 min-h-[100px]"
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${cat.color}`}>
                   <span className="material-symbols-outlined text-2xl">{cat.icon}</span>
@@ -158,7 +158,7 @@ export default function HomePage() {
               <Link
                 key={area.href}
                 href={area.href}
-                className="bg-warm-white border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors"
+                className="bg-warm-white border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors min-h-[44px] flex items-center"
               >
                 <span className="material-symbols-outlined text-sm align-middle mr-1">location_on</span>
                 {area.label}
@@ -182,7 +182,7 @@ export default function HomePage() {
               <Link
                 key={c.href}
                 href={c.href}
-                className="bg-white border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors"
+                className="bg-white border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors min-h-[44px] flex items-center"
               >
                 {c.label}
               </Link>
@@ -203,15 +203,16 @@ export default function HomePage() {
             Weekly halal dining guides, new openings, and community picks delivered
             to your inbox.
           </p>
+          {/* text-base on input prevents iOS zoom; flex-col on mobile for full-width button */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
             <input
               type="email"
               placeholder="your@email.com"
-              className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 border border-white/20 focus:outline-none focus:border-accent text-sm"
+              className="flex-1 px-4 h-12 rounded-xl bg-white/10 text-white placeholder-white/40 border border-white/20 focus:outline-none focus:border-accent text-base"
             />
             <Link
               href="/newsletter"
-              className="bg-accent text-charcoal font-bold px-6 py-3 rounded-xl hover:bg-accent/90 transition-colors shrink-0 text-sm"
+              className="bg-accent text-charcoal font-bold px-6 h-12 rounded-xl hover:bg-accent/90 transition-colors shrink-0 text-sm flex items-center justify-center"
             >
               Subscribe
             </Link>

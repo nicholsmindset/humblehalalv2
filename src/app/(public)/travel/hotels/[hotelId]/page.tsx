@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { MuslimBadges } from '@/components/travel/MuslimBadges'
 import type { MuslimEnrichment } from '@/lib/liteapi/enrich'
@@ -114,10 +115,14 @@ export default function HotelDetailPage() {
       {images.length > 0 && (
         <div className="mb-6">
           <div className="relative h-72 sm:h-96 rounded-2xl overflow-hidden bg-gray-100">
-            <img
+            <Image
               src={images[activeImage]?.url}
               alt={images[activeImage]?.caption ?? hotel.name}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px"
+              className="object-cover"
+              priority
+              unoptimized
             />
             {images.length > 1 && (
               <>
@@ -147,11 +152,11 @@ export default function HotelDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-colors relative ${
                     i === activeImage ? 'border-primary' : 'border-transparent'
                   }`}
                 >
-                  <img src={img.url} alt="" className="w-full h-full object-cover" />
+                  <Image src={img.url} alt="" fill sizes="64px" className="object-cover" unoptimized />
                 </button>
               ))}
             </div>

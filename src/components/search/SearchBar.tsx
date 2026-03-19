@@ -130,6 +130,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/30 text-xl pointer-events-none">
             search
           </span>
+          {/* text-base (16px) prevents iOS Safari from zooming on input focus */}
           <input
             ref={inputRef}
             type="search"
@@ -143,7 +144,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
             aria-expanded={open}
             aria-controls="search-dropdown"
             role="combobox"
-            className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 bg-white text-sm text-charcoal placeholder-charcoal/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-sm"
+            className="w-full pl-10 pr-12 h-12 rounded-xl border border-gray-200 bg-white text-base text-charcoal placeholder-charcoal/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all shadow-sm"
           />
           {loading ? (
             <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 text-xl animate-spin">
@@ -153,7 +154,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
             <button
               type="button"
               onClick={() => { setQuery(''); setResults([]); setOpen(false); inputRef.current?.focus() }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 hover:text-charcoal transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/30 hover:text-charcoal transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Clear search"
             >
               <span className="material-symbols-outlined text-xl">close</span>
@@ -187,7 +188,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
                     role="option"
                     aria-selected={active === globalIdx}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors min-h-[44px] ${
                       active === globalIdx ? 'bg-primary/5 text-primary' : 'text-charcoal hover:bg-gray-50'
                     }`}
                   >
@@ -209,7 +210,7 @@ export default function SearchBar({ placeholder = 'Search halal food, mosques, e
           ))}
 
           {/* View all results */}
-          <div className="px-4 py-2.5 border-t border-gray-100">
+          <div className="px-4 py-3 border-t border-gray-100 min-h-[44px] flex items-center">
             <button
               type="button"
               onClick={handleSubmit as any}

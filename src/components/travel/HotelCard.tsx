@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { MuslimBadges } from './MuslimBadges'
 import type { MuslimEnrichment } from '@/lib/liteapi/enrich'
@@ -43,10 +44,13 @@ export function HotelCard({
       {/* Image */}
       <div className="sm:w-48 sm:flex-shrink-0 h-48 sm:h-auto relative bg-gray-100">
         {imageUrl ? (
-          <img
+          <Image
             src={imageUrl}
             alt={name}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, 192px"
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

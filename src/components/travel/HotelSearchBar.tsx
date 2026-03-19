@@ -83,6 +83,7 @@ export function HotelSearchBar({
 
   return (
     <form onSubmit={handleSearch} className="relative">
+      {/* flex-col on mobile, flex-row on sm+ — inputs are text-base to prevent iOS zoom */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 flex flex-col sm:flex-row gap-3">
         {/* Destination */}
         <div className="flex-1 relative">
@@ -97,7 +98,7 @@ export function HotelSearchBar({
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               placeholder="Tokyo, Dubai, Istanbul…"
               required
-              className="w-full pl-9 pr-3 py-2.5 text-sm text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary placeholder:text-charcoal/30"
+              className="w-full pl-9 pr-3 h-11 text-base text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary placeholder:text-charcoal/30"
             />
           </div>
           {showSuggestions && places.length > 0 && (
@@ -107,7 +108,7 @@ export function HotelSearchBar({
                   <button
                     type="button"
                     onMouseDown={() => selectPlace(p)}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 transition-colors"
+                    className="w-full text-left px-4 py-3 text-sm hover:bg-emerald-50 transition-colors min-h-[44px]"
                   >
                     <p className="font-semibold text-charcoal">{p.name}</p>
                     {p.description && (
@@ -129,7 +130,7 @@ export function HotelSearchBar({
             onChange={(e) => setCheckin(e.target.value)}
             min={new Date().toISOString().slice(0, 10)}
             required
-            className="w-full px-3 py-2.5 text-sm text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
+            className="w-full px-3 h-11 text-base text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -142,7 +143,7 @@ export function HotelSearchBar({
             onChange={(e) => setCheckout(e.target.value)}
             min={checkin || new Date().toISOString().slice(0, 10)}
             required
-            className="w-full px-3 py-2.5 text-sm text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
+            className="w-full px-3 h-11 text-base text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -152,7 +153,7 @@ export function HotelSearchBar({
           <select
             value={guests}
             onChange={(e) => setGuests(parseInt(e.target.value))}
-            className="w-full px-3 py-2.5 text-sm text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary bg-white"
+            className="w-full px-3 h-11 text-base text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary bg-white"
           >
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>
@@ -160,11 +161,11 @@ export function HotelSearchBar({
           </select>
         </div>
 
-        {/* Search button */}
+        {/* Search button — full-width on mobile */}
         <div className="flex items-end">
           <button
             type="submit"
-            className="w-full sm:w-auto bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-2 justify-center"
+            className="w-full sm:w-auto bg-primary text-white px-6 h-11 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-2 justify-center min-h-[44px]"
           >
             <span className="material-symbols-outlined text-sm">search</span>
             Search

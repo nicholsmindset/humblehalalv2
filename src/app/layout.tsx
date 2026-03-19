@@ -10,6 +10,8 @@ const manrope = Manrope({
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-manrope",
   display: "swap",
+  fallback: ["system-ui", "Arial", "sans-serif"],
+  adjustFontFallback: false,
 });
 
 const playfairDisplay = Playfair_Display({
@@ -18,6 +20,8 @@ const playfairDisplay = Playfair_Display({
   style: ["italic"],
   variable: "--font-playfair",
   display: "swap",
+  fallback: ["Georgia", "serif"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {

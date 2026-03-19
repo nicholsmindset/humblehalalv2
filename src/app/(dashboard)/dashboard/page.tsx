@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'My Dashboard | HumbleHalal',
+  robots: { index: false, follow: false },
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()

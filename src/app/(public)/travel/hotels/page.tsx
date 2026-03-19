@@ -19,6 +19,78 @@ interface Hotel {
   muslimEnrichment: MuslimEnrichment | null
 }
 
+// Shared filter panel used in both sidebar and mobile drawer
+function FilterPanel({
+  muslimOnly,
+  setMuslimOnly,
+  minStars,
+  setMinStars,
+  sortBy,
+  setSortBy,
+}: {
+  muslimOnly: boolean
+  setMuslimOnly: (v: boolean) => void
+  minStars: number
+  setMinStars: (v: number) => void
+  sortBy: 'price' | 'rating' | 'muslim'
+  setSortBy: (v: 'price' | 'rating' | 'muslim') => void
+}) {
+  return (
+    <div className="space-y-5">
+      <h2 className="font-bold text-charcoal text-sm">Filters</h2>
+
+      {/* Muslim-friendly toggle */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
+          <input
+            type="checkbox"
+            checked={muslimOnly}
+            onChange={(e) => setMuslimOnly(e.target.checked)}
+            className="accent-primary w-5 h-5"
+          />
+          <span className="text-sm text-charcoal font-semibold">Muslim-Friendly Only</span>
+        </label>
+        <p className="text-xs text-charcoal/40 mt-1 ml-7">Score ≥ 3/5</p>
+      </div>
+
+      {/* Star rating */}
+      <div>
+        <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Min. Stars</p>
+        <div className="flex gap-1">
+          {[0, 3, 4, 5].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setMinStars(s)}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors min-h-[44px] ${
+                minStars === s
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white text-charcoal/60 border-gray-200 hover:border-primary/40'
+              }`}
+            >
+              {s === 0 ? 'All' : `${s}★`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sort */}
+      <div>
+        <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Sort by</p>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="w-full text-base border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-primary bg-white min-h-[44px]"
+        >
+          <option value="price">Lowest price</option>
+          <option value="rating">Best rated</option>
+          <option value="muslim">Most Muslim-friendly</option>
+        </select>
+      </div>
+    </div>
+  )
+}
+
 function HotelSearchContent() {
   const searchParams = useSearchParams()
   const dest = searchParams.get('dest') ?? ''
@@ -32,6 +104,7 @@ function HotelSearchContent() {
   const [muslimOnly, setMuslimOnly] = useState(false)
   const [minStars, setMinStars] = useState(0)
   const [sortBy, setSortBy] = useState<'price' | 'rating' | 'muslim'>('price')
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   const search = useCallback(async () => {
     if (!dest || !checkin || !checkout) return
@@ -95,69 +168,27 @@ function HotelSearchContent() {
       </div>
 
       <div className="flex gap-6">
-        {/* Filters sidebar */}
+        {/* Desktop filters sidebar */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-24 space-y-5">
-            <h2 className="font-bold text-charcoal text-sm">Filters</h2>
-
-            {/* Muslim-friendly toggle */}
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={muslimOnly}
-                  onChange={(e) => setMuslimOnly(e.target.checked)}
-                  className="accent-primary"
-                />
-                <span className="text-sm text-charcoal font-semibold">Muslim-Friendly Only</span>
-              </label>
-              <p className="text-xs text-charcoal/40 mt-1 ml-5">Score ≥ 3/5</p>
-            </div>
-
-            {/* Star rating */}
-            <div>
-              <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Min. Stars</p>
-              <div className="flex gap-1">
-                {[0, 3, 4, 5].map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setMinStars(s)}
-                    className={`flex-1 py-1 rounded-lg text-xs font-bold border transition-colors ${
-                      minStars === s
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-white text-charcoal/60 border-gray-200 hover:border-primary/40'
-                    }`}
-                  >
-                    {s === 0 ? 'All' : `${s}★`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sort */}
-            <div>
-              <p className="text-xs font-bold text-charcoal/50 uppercase tracking-wide mb-2">Sort by</p>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary bg-white"
-              >
-                <option value="price">Lowest price</option>
-                <option value="rating">Best rated</option>
-                <option value="muslim">Most Muslim-friendly</option>
-              </select>
-            </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-24">
+            <FilterPanel
+              muslimOnly={muslimOnly}
+              setMuslimOnly={setMuslimOnly}
+              minStars={minStars}
+              setMinStars={setMinStars}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+            />
           </div>
         </aside>
 
         {/* Results */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <div className="min-w-0">
               {dest && (
-                <h1 className="text-xl font-extrabold text-charcoal">
+                <h1 className="text-xl font-extrabold text-charcoal truncate">
                   Hotels in {dest}
                 </h1>
               )}
@@ -168,14 +199,30 @@ function HotelSearchContent() {
                 </p>
               )}
             </div>
-            {/* Flight affiliate nudge */}
-            <Link
-              href="/travel/flights"
-              className="hidden sm:flex items-center gap-1.5 text-xs text-primary font-semibold border border-primary/20 rounded-full px-3 py-1.5 hover:bg-emerald-50 transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">flight</span>
-              Need flights?
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Mobile filter button — hidden on lg */}
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(true)}
+                className="lg:hidden flex items-center gap-1.5 text-xs text-charcoal font-semibold border border-gray-200 rounded-full px-3 py-2 hover:border-primary transition-colors min-h-[44px]"
+              >
+                <span className="material-symbols-outlined text-sm">tune</span>
+                Filters
+                {(muslimOnly || minStars > 0) && (
+                  <span className="bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {(muslimOnly ? 1 : 0) + (minStars > 0 ? 1 : 0)}
+                  </span>
+                )}
+              </button>
+              {/* Flight affiliate nudge */}
+              <Link
+                href="/travel/flights"
+                className="hidden sm:flex items-center gap-1.5 text-xs text-primary font-semibold border border-primary/20 rounded-full px-3 py-2 hover:bg-emerald-50 transition-colors min-h-[44px]"
+              >
+                <span className="material-symbols-outlined text-sm">flight</span>
+                Need flights?
+              </Link>
+            </div>
           </div>
 
           {loading && (
@@ -246,6 +293,46 @@ function HotelSearchContent() {
           )}
         </div>
       </div>
+
+      {/* Mobile filter drawer — slides in from bottom */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" aria-modal="true" role="dialog" aria-label="Filters">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+          {/* Sheet */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-bold text-charcoal text-base">Filters</h2>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="text-charcoal/40 hover:text-charcoal min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Close filters"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <FilterPanel
+              muslimOnly={muslimOnly}
+              setMuslimOnly={setMuslimOnly}
+              minStars={minStars}
+              setMinStars={setMinStars}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+            />
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(false)}
+              className="w-full mt-6 bg-primary text-white rounded-xl py-3 font-bold text-sm min-h-[44px]"
+            >
+              Show results
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/database.types'
+import { CsvExportButton } from '@/components/admin/CsvExportButton'
 
 type AnalyticsEvent = Database['public']['Tables']['analytics_events']['Row']
 type LiveFeedEvent = Pick<AnalyticsEvent, 'id' | 'event_type' | 'timestamp' | 'listing_name' | 'listing_area' | 'search_term' | 'page_url' | 'device_type' | 'source_channel'>
@@ -69,6 +70,10 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
     { data: topEventTypes },
     { data: liveFeed },
     { data: deviceSplit },
+    { count: newsletterClicks },
+    { data: leadListingRows },
+    { data: unmatchedSearchData },
+    { data: journeyData },
   ] = (await Promise.all([
     // Current period counts
     supabase
@@ -162,6 +167,38 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       .select('device_type')
       .gte('timestamp', since.toISOString())
       .limit(1000),
+
+    // Newsletter click-throughs
+    supabase
+      .from('analytics_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_type', 'newsletter_click')
+      .gte('timestamp', since.toISOString()),
+
+    // Top listing by lead actions
+    supabase
+      .from('analytics_events')
+      .select('listing_id, listing_name, listing_area')
+      .in('event_type', ['click_website', 'click_directions', 'click_phone', 'click_booking', 'click_menu'])
+      .gte('timestamp', since.toISOString())
+      .not('listing_id', 'is', null)
+      .limit(1000),
+
+    // Unmatched searches (search queries with no subsequent listing view in same session)
+    supabase
+      .from('analytics_events')
+      .select('search_term, session_id, event_type')
+      .in('event_type', ['search_query', 'view_listing'])
+      .gte('timestamp', since.toISOString())
+      .limit(2000),
+
+    // Journey explorer (session paths)
+    supabase
+      .from('analytics_events')
+      .select('session_id, event_type, page_url, listing_name, timestamp')
+      .gte('timestamp', since.toISOString())
+      .order('timestamp', { ascending: true })
+      .limit(3000),
   ])) as any[]
 
   // ── Aggregate client-side ──────────────────────────────────────────────────
@@ -197,19 +234,79 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
   const searchDelta = delta(totalSearches, prevSearches)
   const clickDelta = delta(totalClicks, prevClicks)
 
+  // Conversion rate (lead clicks / page views)
+  const convRate =
+    (totalPageViews ?? 0) > 0
+      ? (((totalClicks ?? 0) / (totalPageViews ?? 1)) * 100).toFixed(1)
+      : '0.0'
+
+  // Top performing listing by lead actions
+  type LeadRow = { listing_id: string; listing_name: string | null; listing_area: string | null }
+  const listingLeadCount: Record<string, { name: string; area: string; count: number }> = {}
+  for (const row of (leadListingRows ?? []) as LeadRow[]) {
+    if (!row.listing_id) continue
+    if (!listingLeadCount[row.listing_id]) {
+      listingLeadCount[row.listing_id] = {
+        name: row.listing_name ?? 'Unknown',
+        area: row.listing_area ?? '',
+        count: 0,
+      }
+    }
+    listingLeadCount[row.listing_id].count++
+  }
+  const topListing = Object.values(listingLeadCount).sort((a, b) => b.count - a.count)[0] ?? null
+
+  // Unmatched searches: search_query events where the same session never had a view_listing
+  type SearchRow = { search_term: string | null; session_id: string | null; event_type: string }
+  const searchRows = (unmatchedSearchData ?? []) as SearchRow[]
+  const sessionsWithViews = new Set(
+    searchRows.filter((r) => r.event_type === 'view_listing').map((r) => r.session_id)
+  )
+  const unmatchedMap: Record<string, number> = {}
+  for (const r of searchRows) {
+    if (r.event_type === 'search_query' && r.search_term && r.session_id && !sessionsWithViews.has(r.session_id)) {
+      const term = r.search_term.toLowerCase().trim()
+      unmatchedMap[term] = (unmatchedMap[term] ?? 0) + 1
+    }
+  }
+  const unmatchedSearches = Object.entries(unmatchedMap)
+    .map(([term, count]) => ({ term, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15)
+
+  // Journey explorer: group events by session, show top 10 longest sessions
+  type JourneyRow = { session_id: string | null; event_type: string; page_url: string | null; listing_name: string | null; timestamp: string }
+  const journeyRows = (journeyData ?? []) as JourneyRow[]
+  const sessionMap: Record<string, { steps: { event: string; page: string; listing: string | null; time: string }[] }> = {}
+  for (const r of journeyRows) {
+    if (!r.session_id) continue
+    if (!sessionMap[r.session_id]) sessionMap[r.session_id] = { steps: [] }
+    sessionMap[r.session_id].steps.push({
+      event: r.event_type,
+      page: (r.page_url ?? '').replace('https://humblehalal.sg', ''),
+      listing: r.listing_name,
+      time: new Date(r.timestamp).toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+    })
+  }
+  const journeys = Object.entries(sessionMap)
+    .filter(([, v]) => v.steps.length >= 3)
+    .sort(([, a], [, b]) => b.steps.length - a.steps.length)
+    .slice(0, 10)
+    .map(([id, v]) => ({ sessionId: id.slice(0, 8), steps: v.steps }))
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white">Analytics</h1>
           <p className="text-white/50 text-sm mt-1">Engagement & demand intelligence</p>
         </div>
 
         {/* Date range tabs */}
-        <div className="flex gap-1 bg-white/10 rounded-lg p-1">
+        <div className="flex gap-1 bg-white/10 rounded-lg p-1 self-start sm:self-auto">
           {(Object.entries(RANGES) as [RangeKey, typeof RANGES[RangeKey]][]).map(([key, { label }]) => (
             <a
               key={key}
@@ -227,7 +324,7 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
       </div>
 
       {/* ── Overview stats ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0"><div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 min-w-[320px]">
         <StatCard
           icon="pageview"
           label="Page Views"
@@ -255,13 +352,46 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
           value={uniqueSessions ?? 0}
           range={range}
         />
-      </div>
+        <StatCard
+          icon="mail"
+          label="Newsletter CTR"
+          value={newsletterClicks ?? 0}
+          range={range}
+        />
+        <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="material-symbols-outlined text-primary text-xl">percent</span>
+          </div>
+          <p className="text-3xl font-extrabold text-white tabular-nums">{convRate}%</p>
+          <p className="text-white/50 text-sm mt-1">Conversion Rate</p>
+          <p className="text-white/30 text-xs mt-0.5">lead clicks / page views</p>
+        </div>
+      </div></div>
+
+      {/* ── Top Performing Listing ─────────────────────────────────────────── */}
+      {topListing && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex items-center gap-4">
+          <span className="material-symbols-outlined text-accent text-3xl shrink-0">emoji_events</span>
+          <div className="flex-1">
+            <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-0.5">Top Performing Listing</p>
+            <p className="text-white font-bold">{topListing.name}</p>
+            <p className="text-white/50 text-sm capitalize">{topListing.area}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-extrabold text-accent tabular-nums">{topListing.count}</p>
+            <p className="text-white/40 text-xs">lead actions</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Demand Intelligence ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <RankCard title="Top Searches" icon="search" items={searchCounts} emptyText="No search data yet" />
-        <RankCard title="Top Areas" icon="location_on" items={areaCounts} emptyText="No area data yet" capitalize />
-        <RankCard title="Top Categories" icon="category" items={categoryCounts} emptyText="No category data yet" capitalize />
+        <RankCard title="Top Searches" icon="search" items={searchCounts} emptyText="No search data yet"
+          csvData={searchCounts.map((s) => ({ search_term: s.value, count: s.count }))} csvFilename="top-searches" />
+        <RankCard title="Top Areas" icon="location_on" items={areaCounts} emptyText="No area data yet" capitalize
+          csvData={areaCounts.map((s) => ({ area: s.value, count: s.count }))} csvFilename="top-areas" />
+        <RankCard title="Top Categories" icon="category" items={categoryCounts} emptyText="No category data yet" capitalize
+          csvData={categoryCounts.map((s) => ({ category: s.value, count: s.count }))} csvFilename="top-categories" />
       </div>
 
       {/* ── Event & Device breakdown ───────────────────────────────────────── */}
@@ -332,6 +462,106 @@ export default async function AdminAnalyticsPage({ searchParams }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Brand / Sponsor Deep Dive ─────────────────────────────────────── */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h2 className="text-white font-bold mb-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary text-lg">storefront</span>
+          Brand / Sponsor Deep Dive
+        </h2>
+        <p className="text-white/50 text-sm mb-5">
+          Generate a per-brand analytics report showing impressions, lead actions, CTR vs category average, traffic sources, and visitor journeys — ready to email to sponsors as proof of ROI.
+        </p>
+        <a
+          href="/admin/reports"
+          className="inline-flex items-center gap-2 bg-primary text-white rounded-lg px-5 py-2.5 text-sm font-bold hover:bg-primary/90 transition-colors"
+        >
+          <span className="material-symbols-outlined text-base">picture_as_pdf</span>
+          Generate Sponsor Report
+        </a>
+      </div>
+
+      {/* ── Unmatched Searches ──────────────────────────────────────────────── */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h2 className="text-white font-bold mb-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary text-lg">search_off</span>
+          Unmatched Searches
+          <span className="ml-auto flex items-center gap-2">
+            <span className="text-white/40 text-xs font-normal">Searches with 0 results viewed</span>
+            <CsvExportButton
+              data={unmatchedSearches.map((s) => ({ search_term: s.term, count: s.count }))}
+              filename="unmatched-searches"
+            />
+          </span>
+        </h2>
+        <p className="text-white/40 text-sm mb-4">
+          These search terms led to no listing views — potential content gaps or new business opportunities.
+        </p>
+        {unmatchedSearches.length === 0 ? (
+          <p className="text-white/30 text-sm">No unmatched searches in this period.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {unmatchedSearches.map(({ term, count }) => (
+              <div
+                key={term}
+                className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2"
+              >
+                <span className="text-white/70 text-sm truncate">&ldquo;{term}&rdquo;</span>
+                <span className="text-accent text-xs font-bold tabular-nums shrink-0 ml-2">{count}×</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Journey Explorer ─────────────────────────────────────────────────── */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h2 className="text-white font-bold mb-2 flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary text-lg">route</span>
+          Journey Explorer
+          <span className="ml-auto text-white/40 text-xs font-normal">Top 10 longest sessions</span>
+        </h2>
+        <p className="text-white/40 text-sm mb-4">
+          Full navigation paths showing how visitors discover and interact with listings.
+        </p>
+        {journeys.length === 0 ? (
+          <p className="text-white/30 text-sm">No multi-step sessions in this period.</p>
+        ) : (
+          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+            {journeys.map(({ sessionId, steps }) => (
+              <div key={sessionId} className="bg-white/5 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="material-symbols-outlined text-sm text-white/40">person</span>
+                  <span className="text-white/50 text-xs font-mono">{sessionId}…</span>
+                  <span className="text-white/30 text-xs">{steps.length} steps</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  {steps.map((step, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-white/20 text-xs">→</span>}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+                          step.event.startsWith('click_')
+                            ? 'bg-accent/20 text-accent'
+                            : step.event === 'search_query'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-white/10 text-white/60'
+                        }`}
+                        title={step.page || step.event}
+                      >
+                        <span className="material-symbols-outlined text-xs">
+                          {EVENT_ICONS[step.event] ?? 'radio_button_checked'}
+                        </span>
+                        {step.listing ?? step.page.split('/').pop() ?? step.event.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Live Activity Feed ─────────────────────────────────────────────── */}
@@ -434,12 +664,16 @@ function RankCard({
   items,
   emptyText,
   capitalize,
+  csvData,
+  csvFilename,
 }: {
   title: string
   icon: string
   items: { value: string; count: number }[]
   emptyText: string
   capitalize?: boolean
+  csvData?: Record<string, string | number>[]
+  csvFilename?: string
 }) {
   const max = items[0]?.count ?? 1
   return (
@@ -447,6 +681,11 @@ function RankCard({
       <h2 className="text-white font-bold mb-4 flex items-center gap-2">
         <span className="material-symbols-outlined text-primary text-lg">{icon}</span>
         {title}
+        {csvData && csvFilename && (
+          <span className="ml-auto">
+            <CsvExportButton data={csvData} filename={csvFilename} />
+          </span>
+        )}
       </h2>
       {items.length === 0 ? (
         <p className="text-white/40 text-sm">{emptyText}</p>

@@ -18,19 +18,19 @@ const columns = [
     heading: 'Community',
     links: [
       { label: 'Forum', href: '/community' },
-      { label: 'Reviews', href: '/community/reviews' },
+      { label: 'Reviews', href: '/community' },
       { label: 'Classifieds', href: '/classifieds' },
       { label: 'Travel Guides', href: '/travel' },
       { label: 'Blog', href: '/blog' },
-      { label: 'Newsletter', href: '/newsletter' },
+      { label: 'Newsletter', href: 'https://humblehalal.beehiiv.com', external: true },
     ],
   },
   {
     heading: 'Business',
     links: [
-      { label: 'List Your Business', href: '/business/submit' },
-      { label: 'Premium Listings', href: '/business/premium' },
-      { label: 'Advertise', href: '/business/advertise' },
+      { label: 'List Your Business', href: '/business' },
+      { label: 'Premium Listings', href: '/business' },
+      { label: 'Advertise', href: '/business' },
       { label: 'Business Dashboard', href: '/dashboard' },
       { label: 'Halal Products', href: '/products' },
       { label: 'Services', href: '/services' },
@@ -81,13 +81,24 @@ export function Footer() {
               </h3>
               <ul className="space-y-2">
                 {col.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-white/60 text-sm hover:text-accent transition-colors"
-                    >
-                      {link.label}
-                    </Link>
+                  <li key={`${link.href}-${link.label}`}>
+                    {'external' in link && link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/60 text-sm hover:text-accent transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-white/60 text-sm hover:text-accent transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

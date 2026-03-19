@@ -1,12 +1,36 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import csrf from 'edge-csrf'
 import { updateSession } from '@/lib/supabase/middleware'
 
 const PROTECTED_ROUTES = ['/admin', '/dashboard']
 const AUTH_ROUTES = ['/login', '/signup']
 
+// CSRF paths to skip (webhooks, analytics ingestion, public GET-like APIs)
+const CSRF_SKIP_PATHS = ['/api/webhooks', '/api/track', '/api/cron', '/api/travel']
+
+const csrfProtect = csrf({
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    name: '_csrf',
+    sameSite: 'strict',
+  },
+})
+
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request)
   const { pathname } = request.nextUrl
+
+  // ── CSRF protection for state-changing requests ──────────────────
+  const shouldCheckCsrf =
+    !CSRF_SKIP_PATHS.some((p) => pathname.startsWith(p)) &&
+    pathname.startsWith('/api')
+
+  if (shouldCheckCsrf) {
+    const csrfError = await csrfProtect(request, supabaseResponse)
+    if (csrfError) {
+      return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 })
+    }
+  }
 
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r))
   const isAuth = AUTH_ROUTES.some((r) => pathname.startsWith(r))
