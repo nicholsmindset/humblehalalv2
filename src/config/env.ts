@@ -35,6 +35,10 @@ export const env = {
   BEEHIIV_PUBLICATION_ID:    optionalEnv('BEEHIIV_PUBLICATION_ID'),
   SENTRY_DSN:                optionalEnv('SENTRY_DSN'),
   CRON_SECRET:               optionalEnv('CRON_SECRET'),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: optionalEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY'),
+  TURNSTILE_SECRET_KEY:      optionalEnv('TURNSTILE_SECRET_KEY'),
+  LITEAPI_API_KEY:           optionalEnv('LITEAPI_API_KEY'),
+  LITEAPI_SANDBOX_KEY:       optionalEnv('LITEAPI_SANDBOX_KEY'),
 } as const
 
 export type Env = typeof env
