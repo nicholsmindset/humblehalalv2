@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 
 const CATEGORIES = [
   'Jobs & Gigs',
@@ -32,6 +33,8 @@ export default function ClassifiedsSubmitPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const [category, setCategory] = useState('')
   const [title, setTitle] = useState('')
@@ -59,6 +62,7 @@ export default function ClassifiedsSubmitPage() {
         area,
         contact_method: contactMethod,
         contact_value: contactValue.trim(),
+        captchaToken,
       }),
     })
 
@@ -67,6 +71,8 @@ export default function ClassifiedsSubmitPage() {
     } else {
       const data = await res.json().catch(() => ({}))
       setError(data.error ?? 'Failed to submit. Please try again.')
+      turnstileRef.current?.reset()
+      setCaptchaToken(null)
       setLoading(false)
     }
   }
@@ -224,6 +230,17 @@ export default function ClassifiedsSubmitPage() {
           </ul>
         </div>
 
+        {/* Turnstile CAPTCHA */}
+        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+            onSuccess={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(null)}
+            options={{ theme: 'light', size: 'flexible' }}
+          />
+        )}
+
         {error && (
           <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>
         )}
@@ -231,7 +248,7 @@ export default function ClassifiedsSubmitPage() {
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
-            disabled={loading || !category || !title.trim() || !description.trim() || !area || !contactMethod || !contactValue.trim()}
+            disabled={loading || !captchaToken || !category || !title.trim() || !description.trim() || !area || !contactMethod || !contactValue.trim()}
             className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {loading

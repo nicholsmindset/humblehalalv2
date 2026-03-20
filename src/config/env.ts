@@ -39,6 +39,8 @@ export const env = {
   TURNSTILE_SECRET_KEY:      optionalEnv('TURNSTILE_SECRET_KEY'),
   LITEAPI_API_KEY:           optionalEnv('LITEAPI_API_KEY'),
   LITEAPI_SANDBOX_KEY:       optionalEnv('LITEAPI_SANDBOX_KEY'),
+  UPSTASH_REDIS_REST_URL:    optionalEnv('UPSTASH_REDIS_REST_URL'),
+  UPSTASH_REDIS_REST_TOKEN:  optionalEnv('UPSTASH_REDIS_REST_TOKEN'),
 } as const
 
 export type Env = typeof env

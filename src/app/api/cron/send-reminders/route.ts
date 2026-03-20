@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEventReminder } from '@/lib/resend/send'
+import { verifyCronSecret } from '@/lib/utils/cron-auth'
 
 // Run every 30 minutes via Vercel Cron
 // vercel.json: { "path": "/api/cron/send-reminders", "schedule": "*/30 * * * *" }
@@ -14,13 +15,8 @@ function getServiceClient() {
 }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (
-    process.env.CRON_SECRET &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
+  const deny = verifyCronSecret(request)
+  if (deny) return deny
 
   const db = getServiceClient() as any
   const now = new Date()

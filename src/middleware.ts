@@ -1,11 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import csrf from 'edge-csrf'
 import { updateSession } from '@/lib/supabase/middleware'
+import { authLimiter, searchLimiter, checkLimit, getIdentifier } from '@/lib/security/rate-limit'
 
 const PROTECTED_ROUTES = ['/admin', '/dashboard']
 const AUTH_ROUTES = ['/login', '/signup']
 
-// CSRF paths to skip (webhooks, analytics ingestion, public GET-like APIs)
+// CSRF paths to skip (webhooks, analytics ingestion, cron jobs, travel APIs)
 const CSRF_SKIP_PATHS = ['/api/webhooks', '/api/track', '/api/cron', '/api/travel']
 
 const csrfProtect = csrf({
@@ -19,6 +20,20 @@ const csrfProtect = csrf({
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request)
   const { pathname } = request.nextUrl
+
+  // ── Rate limiting on auth endpoints ────────────────────────────
+  if (pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/api/auth')) {
+    const ip = getIdentifier(request)
+    const result = await checkLimit(authLimiter, ip)
+    if (result.limited) return result.response
+  }
+
+  // ── Rate limiting on search/general API ────────────────────────
+  if (pathname.startsWith('/api/search')) {
+    const ip = getIdentifier(request)
+    const result = await checkLimit(searchLimiter, ip)
+    if (result.limited) return result.response
+  }
 
   // ── CSRF protection for state-changing requests ──────────────────
   const shouldCheckCsrf =

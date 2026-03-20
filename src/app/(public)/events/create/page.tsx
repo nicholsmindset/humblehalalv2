@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 
 const CATEGORIES = [
   'Bazaar', 'Class & Workshop', 'Talk & Lecture', 'Networking', 'Family',
@@ -26,6 +27,8 @@ export default function CreateEventPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   // Step 1 — Basic info
   const [title, setTitle] = useState('')
@@ -88,12 +91,15 @@ export default function CreateEventPage() {
           })) : [],
           price_type: isTicketed && tickets.some((t) => parseFloat(t.price) > 0) ? 'paid' : 'free',
           status: 'pending',
+          captchaToken,
         }),
       })
 
       const data = await res.json()
       if (!res.ok) {
         setError(data.error ?? 'Failed to create event.')
+        turnstileRef.current?.reset()
+        setCaptchaToken(null)
         return
       }
       router.push(`/dashboard/my-events`)
@@ -418,6 +424,17 @@ export default function CreateEventPage() {
               Verified organisers get auto-publish.
             </div>
 
+            {/* Turnstile CAPTCHA */}
+            {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                options={{ theme: 'light', size: 'flexible' }}
+              />
+            )}
+
             {error && (
               <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
@@ -459,7 +476,7 @@ export default function CreateEventPage() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !captchaToken}
             className="flex-1 bg-accent text-charcoal rounded-xl py-3 text-sm font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <span className="material-symbols-outlined text-base animate-spin">refresh</span>}
