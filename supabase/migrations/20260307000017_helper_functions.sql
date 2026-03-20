@@ -1,6 +1,6 @@
 -- ============================================================
 -- Migration 017: Helper Functions & Search Vector
--- Fixes audit items C40, C41, C42 and broken admin policies
+-- Fixes audit items C40, C41, C42 + travel admin policies
 -- ============================================================
 
 -- ============================================================
@@ -137,33 +137,7 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================
--- 5. Fix broken admin policies in events ticketing tables
--- Migration 014 referenced "role = 'admin'" but user_profiles
--- has is_admin BOOLEAN, not a role column. Replace with is_admin().
--- ============================================================
-
--- event_tickets
-DROP POLICY IF EXISTS "admin_all_event_tickets" ON event_tickets;
-CREATE POLICY "admin_all_event_tickets" ON event_tickets
-  FOR ALL TO authenticated USING (is_admin());
-
--- event_orders
-DROP POLICY IF EXISTS "admin_all_event_orders" ON event_orders;
-CREATE POLICY "admin_all_event_orders" ON event_orders
-  FOR ALL TO authenticated USING (is_admin());
-
--- event_order_items
-DROP POLICY IF EXISTS "admin_all_event_order_items" ON event_order_items;
-CREATE POLICY "admin_all_event_order_items" ON event_order_items
-  FOR ALL TO authenticated USING (is_admin());
-
--- organiser_payouts
-DROP POLICY IF EXISTS "admin_all_payouts" ON organiser_payouts;
-CREATE POLICY "admin_all_payouts" ON organiser_payouts
-  FOR ALL TO authenticated USING (is_admin());
-
--- ============================================================
--- 6. Add admin read policy for travel_bookings
+-- 5. Add admin read policy for travel_bookings
 -- ============================================================
 CREATE POLICY "admin_all_travel_bookings" ON travel_bookings
   FOR ALL TO authenticated USING (is_admin());

@@ -77,12 +77,12 @@ CREATE POLICY "public_read_event_tickets" ON event_tickets
 CREATE POLICY "organiser_manage_event_tickets" ON event_tickets
   FOR ALL USING (
     event_id IN (
-      SELECT id FROM events WHERE created_by = auth.uid()
+      SELECT id FROM events WHERE organiser_id = auth.uid()
     )
   );
 
 CREATE POLICY "admin_all_event_tickets" ON event_tickets
-  FOR ALL USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'admin');
+  FOR ALL TO authenticated USING (is_admin());
 
 -- ── event_orders ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS event_orders (
@@ -115,7 +115,7 @@ CREATE POLICY "own_order_select" ON event_orders
 
 CREATE POLICY "organiser_order_select" ON event_orders
   FOR SELECT USING (
-    event_id IN (SELECT id FROM events WHERE created_by = auth.uid())
+    event_id IN (SELECT id FROM events WHERE organiser_id = auth.uid())
   );
 
 CREATE POLICY "service_role_insert_order" ON event_orders
@@ -125,7 +125,7 @@ CREATE POLICY "service_role_update_order" ON event_orders
   FOR UPDATE USING (true);
 
 CREATE POLICY "admin_all_event_orders" ON event_orders
-  FOR ALL USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'admin');
+  FOR ALL TO authenticated USING (is_admin());
 
 -- ── event_order_items ───────────────────────────────────────
 CREATE TABLE IF NOT EXISTS event_order_items (
@@ -164,12 +164,12 @@ CREATE POLICY "checkin_update" ON event_order_items
     order_id IN (
       SELECT eo.id FROM event_orders eo
       JOIN events e ON e.id = eo.event_id
-      WHERE e.created_by = auth.uid()
+      WHERE e.organiser_id = auth.uid()
     )
   );
 
 CREATE POLICY "admin_all_event_order_items" ON event_order_items
-  FOR ALL USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'admin');
+  FOR ALL TO authenticated USING (is_admin());
 
 -- ── event_promo_codes ───────────────────────────────────────
 CREATE TABLE IF NOT EXISTS event_promo_codes (
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS event_promo_codes (
 ALTER TABLE event_promo_codes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "organiser_promo_codes" ON event_promo_codes
-  FOR ALL USING (event_id IN (SELECT id FROM events WHERE created_by = auth.uid()));
+  FOR ALL USING (event_id IN (SELECT id FROM events WHERE organiser_id = auth.uid()));
 
 CREATE POLICY "public_validate_promo" ON event_promo_codes
   FOR SELECT USING (is_active = true);
@@ -212,7 +212,7 @@ CREATE POLICY "public_read_questions" ON event_custom_questions
   FOR SELECT USING (true);
 
 CREATE POLICY "organiser_manage_questions" ON event_custom_questions
-  FOR ALL USING (event_id IN (SELECT id FROM events WHERE created_by = auth.uid()));
+  FOR ALL USING (event_id IN (SELECT id FROM events WHERE organiser_id = auth.uid()));
 
 -- ── event_reminders ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS event_reminders (
@@ -255,7 +255,7 @@ CREATE POLICY "own_payouts_select" ON organiser_payouts
   FOR SELECT USING (organiser_id = auth.uid());
 
 CREATE POLICY "admin_all_payouts" ON organiser_payouts
-  FOR ALL USING ((SELECT role FROM user_profiles WHERE id = auth.uid()) = 'admin');
+  FOR ALL TO authenticated USING (is_admin());
 
 CREATE POLICY "service_role_insert_payouts" ON organiser_payouts
   FOR INSERT WITH CHECK (true);
