@@ -412,3 +412,4 @@ HumbleHalal.com is not affiliated with MUIS (Majlis Ugama Islam Singapura). Hala
 ---
 
 *Built in Singapore · Serving the Muslim community*
+test content
