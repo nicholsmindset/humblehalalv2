@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -43,9 +44,9 @@ export default async function SavedPage() {
               if (!listing) return null
               return (
                 <div key={item.id} className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all overflow-hidden">
-                  <div className="h-36 bg-gray-100 overflow-hidden">
+                  <div className="relative h-36 bg-gray-100 overflow-hidden">
                     {listing.photos?.[0] ? (
-                      <img src={listing.photos[0]} alt={listing.name} className="w-full h-full object-cover" />
+                      <Image src={listing.photos[0]} alt={listing.name} fill className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-emerald-50">
                         <span className="material-symbols-outlined text-3xl text-primary">restaurant</span>

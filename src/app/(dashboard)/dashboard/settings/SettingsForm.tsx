@@ -3,7 +3,6 @@
 import React from 'react'
 
 interface Props {
-  userId: string
   email: string
   initialProfile: {
     display_name?: string
@@ -13,7 +12,7 @@ interface Props {
   }
 }
 
-export function SettingsForm({ userId, email, initialProfile }: Props) {
+export function SettingsForm({ email, initialProfile }: Props) {
   const [displayName, setDisplayName] = React.useState(initialProfile.display_name ?? '')
   const [phone, setPhone] = React.useState(initialProfile.phone ?? '')
   const [emailReviews, setEmailReviews] = React.useState(initialProfile.email_notifications_reviews ?? true)

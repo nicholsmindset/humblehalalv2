@@ -240,9 +240,9 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredListings.map((listing: any) => (
                 <Link key={listing.id} href={`/restaurant/${listing.slug}`} className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden">
-                  <div className="h-40 bg-gray-100 overflow-hidden">
+                  <div className="relative h-40 bg-gray-100 overflow-hidden">
                     {listing.photos?.[0] ? (
-                      <img src={listing.photos[0]} alt={listing.name} className="w-full h-full object-cover" />
+                      <Image src={listing.photos[0]} alt={listing.name} fill className="object-cover" unoptimized />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-emerald-50">
                         <span className="material-symbols-outlined text-4xl text-primary">restaurant</span>
@@ -283,7 +283,7 @@ export default async function HomePage() {
                   <Link key={evt.id} href={`/events/${evt.slug}`} className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden">
                     <div className="h-32 bg-amber-50 overflow-hidden relative">
                       {evt.images?.[0] ? (
-                        <img src={evt.images[0]} alt={evt.title} className="w-full h-full object-cover" />
+                        <Image src={evt.images[0]} alt={evt.title} fill className="object-cover" unoptimized />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center">
                           <span className="text-accent font-extrabold text-2xl">{start.toLocaleDateString('en-SG', { day: 'numeric' })}</span>

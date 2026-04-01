@@ -30,7 +30,6 @@ export default async function SettingsPage() {
         <p className="text-charcoal/60 text-sm mb-8">Manage your profile and notification preferences.</p>
 
         <SettingsForm
-          userId={user.id}
           email={user.email ?? ''}
           initialProfile={profile ?? {}}
         />
