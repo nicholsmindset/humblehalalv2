@@ -10,7 +10,7 @@
     { "path": "/api/cron/ahrefs-pull",     "schedule": "0 22 * * 1" },
     { "path": "/api/cron/morning-briefing","schedule": "0 23 * * *" },
     { "path": "/api/cron/analytics-rollup","schedule": "0 17 * * *" },
-    { "path": "/api/cron/send-reminders",  "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/send-reminders",  "schedule": "0 8 * * *" },
     { "path": "/api/cron/pii-purge",       "schedule": "0 19 1 * *" }
   ]
 }
