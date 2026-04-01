@@ -209,6 +209,23 @@ export default async function PrayerTimesSingaporePage() {
         </Link>
       </div>
 
+      {/* Nearby mosques by area */}
+      <div className="mt-8">
+        <h2 className="text-lg font-bold text-charcoal mb-3">Find a Mosque Near You</h2>
+        <div className="flex flex-wrap gap-2">
+          {['Arab Street', 'Tampines', 'Woodlands', 'Jurong East', 'Bedok', 'Yishun'].map((area) => (
+            <Link
+              key={area}
+              href={`/mosque?area=${area.toLowerCase().replace(' ', '-')}`}
+              className="border border-gray-200 rounded-full px-3 py-1.5 text-sm text-charcoal hover:border-primary hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-xs align-middle mr-1">mosque</span>
+              {area}
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* JSON-LD */}
       <script
         type="application/ld+json"

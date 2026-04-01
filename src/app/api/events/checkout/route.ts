@@ -166,6 +166,7 @@ export async function POST(request: NextRequest) {
     metadata: {
       order_id: order.id,
       event_id,
+      user_id: user?.id ?? '',
       attendee_name,
       items: JSON.stringify(items),
     },

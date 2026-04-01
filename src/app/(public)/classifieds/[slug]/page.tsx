@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE } from '@/config'
+import { ContactReveal } from './ContactReveal'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -160,12 +161,14 @@ export default async function ClassifiedDetailPage({ params }: Props) {
               </div>
             )}
 
-            {!isExpired && item.contact_method && (
+            {!isExpired && item.contact_method && item.contact_value && (
               <div className="space-y-2">
                 <p className="text-xs text-charcoal/40 uppercase tracking-wide font-medium">Contact Seller</p>
-                <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm text-charcoal break-all">
-                  {item.contact_method}
-                </div>
+                <ContactReveal
+                  contactMethod={item.contact_method}
+                  contactValue={item.contact_value}
+                  itemTitle={item.title}
+                />
               </div>
             )}
 

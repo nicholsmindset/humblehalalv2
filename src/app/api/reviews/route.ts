@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   // Check the listing exists and is active
   const { data: listing } = await supabase
     .from('listings')
-    .select('id')
+    .select('id, name, slug, email')
     .eq('id', listing_id)
     .eq('status', 'active')
     .single()
@@ -78,5 +78,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 })
   }
 
+  // Notify listing owner (non-blocking)
+  notifyListingOwner(listing, cleanBody, rating).catch(() => {})
+
   return NextResponse.json({ id: review?.id }, { status: 201 })
+}
+
+async function notifyListingOwner(
+  listing: { name: string; slug: string; email: string | null } | null,
+  reviewBody: string,
+  rating: number,
+) {
+  if (!process.env.RESEND_API_KEY) return
+  if (!listing?.email) return
+  try {
+    const { getResend, FROM_ADDRESS } = await import('@/lib/resend/index')
+    const resend = getResend()
+    const stars = '⭐'.repeat(Math.min(rating, 5))
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: listing.email,
+      subject: `New ${rating}-star review for ${listing.name}`,
+      html: `<p>Your listing <strong>${listing.name}</strong> received a new ${rating}-star review:</p><blockquote>${reviewBody.slice(0, 300)}</blockquote><p>${stars}</p><p><a href="https://humblehalal.sg/restaurant/${listing.slug}">View listing →</a></p>`,
+      text: `New ${rating}-star review for ${listing.name}:\n\n${reviewBody.slice(0, 300)}\n\n${stars}`,
+    })
+  } catch {
+    // Non-critical — don't fail the review submission
+  }
 }

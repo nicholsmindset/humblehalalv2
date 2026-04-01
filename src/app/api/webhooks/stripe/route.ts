@@ -99,15 +99,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       })
   }
 
-  // Update event totals
+  // Update event totals via RPC (increment pattern — db.raw is not available in supabase-js)
   await db
-    .from('events')
-    .update({
-      total_tickets_sold: db.raw(`total_tickets_sold + ${itemInserts.length}`),
-      total_revenue: db.raw(`total_revenue + ${order.total_amount}`),
+    .rpc('increment_event_totals', {
+      p_event_id: order.event_id,
+      p_tickets: itemInserts.length,
+      p_revenue: order.total_amount,
     })
-    .eq('id', order.event_id)
-    .catch(() => {})  // raw not available — best effort
+    .then(() => {})
+    .catch(() => {})  // best-effort; RPC may not exist yet
 
   // Fetch event details for emails
   const { data: evt } = (await db

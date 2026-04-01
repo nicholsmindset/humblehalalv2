@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SITE_URL } from '@/config'
+import { ShareButtons } from '@/components/blog/ShareButtons'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
@@ -45,6 +46,18 @@ export default async function BlogPostPage({ params }: Props) {
 
   const title = post.title ?? post.keyword ?? 'Halal Singapore Guide'
   const publishDate = new Date(post.published_at ?? post.created_at)
+
+  // Related posts: same vertical, published, exclude current
+  const { data: relatedRows } = (await (supabase as any)
+    .from('ai_content_drafts')
+    .select('id, title, keyword, area, vertical, word_count, published_at, created_at')
+    .eq('content_type', 'blog')
+    .eq('status', 'published')
+    .eq('vertical', post.vertical)
+    .neq('id', post.id)
+    .order('published_at', { ascending: false })
+    .limit(3)) as any
+  const related = (relatedRows ?? []) as any[]
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -114,6 +127,38 @@ export default async function BlogPostPage({ params }: Props) {
           <span className="material-symbols-outlined text-3xl block mb-2">hourglass_empty</span>
           Content coming soon.
         </div>
+      )}
+
+      {/* Share buttons */}
+      <ShareButtons url={`${SITE_URL}/blog/${post.id}`} title={title} />
+
+      {/* Related posts */}
+      {related.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-lg font-bold text-charcoal mb-4">Related Articles</h2>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {related.map((r: any) => (
+              <Link
+                key={r.id}
+                href={`/blog/${r.id}`}
+                className="group bg-white rounded-xl border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden"
+              >
+                <div className="h-20 bg-gradient-to-br from-primary/10 to-accent/10 relative overflow-hidden flex items-center justify-center">
+                  <div className="islamic-pattern absolute inset-0" />
+                  <span className="material-symbols-outlined text-2xl text-primary/40 relative z-10">article</span>
+                </div>
+                <div className="p-3">
+                  <p className="text-xs font-bold text-charcoal line-clamp-2 leading-snug">
+                    {r.title ?? r.keyword ?? 'Untitled'}
+                  </p>
+                  <p className="text-[10px] text-charcoal/40 mt-1">
+                    {new Date(r.published_at ?? r.created_at).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Footer / back link */}

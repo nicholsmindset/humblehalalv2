@@ -129,6 +129,32 @@ export default async function MosqueDetailPage({ params }: Props) {
             </section>
           )}
 
+          {/* Location map */}
+          {(mosque.address || mosque.name) && (
+            <section>
+              <h2 className="text-lg font-bold text-charcoal mb-3">Location</h2>
+              <div className="h-64 rounded-xl overflow-hidden border border-gray-200">
+                <iframe
+                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(mosque.address ?? `${mosque.name} mosque Singapore`)}`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary text-sm hover:underline mt-2 inline-block"
+              >
+                Open in Google Maps →
+              </a>
+            </section>
+          )}
+
           {/* Phone */}
           {mosque.phone && (
             <section>
@@ -158,7 +184,7 @@ export default async function MosqueDetailPage({ params }: Props) {
               Get Directions
             </a>
             <a
-              href="/prayer-times"
+              href="/prayer-times/singapore"
               className="flex items-center justify-center gap-2 w-full border border-gray-200 text-charcoal rounded-lg px-4 py-2.5 text-sm font-medium hover:border-primary transition-colors"
             >
               <span className="material-symbols-outlined text-base">schedule</span>

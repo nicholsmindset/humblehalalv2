@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ListingCard } from '@/components/listings/ListingCard'
-import { ISR_REVALIDATE, HalalStatus, SingaporeArea } from '@/config'
+import { generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema'
+import { ISR_REVALIDATE, HalalStatus, SingaporeArea, SITE_URL } from '@/config'
 import type { ListingCardProps } from '@/components/listings/ListingCard'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
@@ -221,18 +222,35 @@ export default async function CateringPage({ searchParams }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'ItemList',
-            name: heading,
-            numberOfItems: listings.length,
-            itemListElement: listings.map((l, i) => ({
-              '@type': 'ListItem',
-              position: i + 1,
-              name: l.name,
-              url: `https://humblehalal.sg/restaurant/${l.slug}`,
-            })),
-          }),
+          __html: JSON.stringify([
+            generateBreadcrumbSchema([
+              { name: 'Home', url: SITE_URL },
+              { name: 'Halal Catering', url: `${SITE_URL}/catering` },
+              ...(area ? [{ name: AREA_LABELS[area] ?? area, url: `${SITE_URL}/catering?area=${area}` }] : []),
+            ]),
+            generateFAQSchema([
+              {
+                question: 'How do I find halal catering in Singapore?',
+                answer: 'Browse HumbleHalal\'s directory of MUIS-certified and Muslim-owned catering services across Singapore. Filter by area and event type to find the right caterer.',
+              },
+              {
+                question: 'What types of halal catering are available in Singapore?',
+                answer: 'Singapore has a wide variety of halal catering options including Malay, Indian Muslim, buffet, bento, BBQ, nasi padang, wedding catering, and corporate event catering.',
+              },
+            ]),
+            {
+              '@context': 'https://schema.org',
+              '@type': 'ItemList',
+              name: heading,
+              numberOfItems: listings.length,
+              itemListElement: listings.map((l, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                name: l.name,
+                url: `${SITE_URL}/catering/${l.slug}`,
+              })),
+            },
+          ]),
         }}
       />
     </div>

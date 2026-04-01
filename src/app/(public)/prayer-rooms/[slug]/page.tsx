@@ -268,14 +268,17 @@ export default async function PrayerRoomDetailPage({ params }: Props) {
           </Link>
 
           {/* Suggest edit */}
-          <div className="bg-gray-50 rounded-xl p-4 text-center">
-            <p className="text-xs text-charcoal/40 mb-2">Is this information outdated?</p>
-            <a
-              href={`mailto:hello@humblehalal.sg?subject=Update: ${encodeURIComponent(room.name)}`}
-              className="text-xs text-primary font-medium hover:underline"
-            >
-              Suggest a correction →
-            </a>
+          <div className="bg-amber-50 rounded-xl p-4 flex items-start gap-3">
+            <span className="material-symbols-outlined text-accent mt-0.5 shrink-0">info</span>
+            <div>
+              <p className="text-charcoal/70 text-sm">Is this information outdated or incorrect?</p>
+              <a
+                href={`mailto:hello@humblehalal.sg?subject=${encodeURIComponent(`Update Prayer Room: ${room.name}`)}&body=${encodeURIComponent(`Hi, I'd like to suggest an update for the prayer room listing: ${room.name}\n\nDetails:\n`)}`}
+                className="text-primary text-sm font-medium hover:underline"
+              >
+                Suggest an update →
+              </a>
+            </div>
           </div>
         </div>
       </div>

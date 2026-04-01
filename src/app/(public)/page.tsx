@@ -1,5 +1,7 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { IslamicPattern } from '@/components/layout/IslamicPattern'
+import { createClient } from '@/lib/supabase/server'
 
 // ── Category grid data ────────────────────────────────────────
 const categories = [
@@ -43,13 +45,49 @@ export const metadata = {
     "Singapore's trusted halal directory. Find MUIS-certified restaurants, Muslim businesses, mosques, events, classifieds and more. 2,000+ halal listings.",
 }
 
-export default function HomePage() {
+export const revalidate = 1800
+
+export default async function HomePage() {
+  const supabase = await createClient()
+  const [
+    { data: featuredListings },
+    { data: upcomingEvents },
+    { data: newlyAdded },
+    { count: listingCount },
+    { count: mosqueCount },
+    { count: prayerRoomCount },
+  ] = await Promise.all([
+    (supabase as any).from('listings')
+      .select('id,name,slug,vertical,area,halal_status,photos,rating_avg,rating_count')
+      .eq('status', 'active').eq('is_featured', true).limit(6),
+    (supabase as any).from('events')
+      .select('id,slug,title,area,venue,starts_at,ends_at,price_type,images,organiser')
+      .eq('status', 'active').gte('ends_at', new Date().toISOString()).order('starts_at', { ascending: true }).limit(4),
+    (supabase as any).from('listings')
+      .select('id,name,slug,vertical,area,halal_status,photos,rating_avg,rating_count,created_at')
+      .eq('status', 'active').order('created_at', { ascending: false }).limit(8),
+    (supabase as any).from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    (supabase as any).from('mosques').select('*', { count: 'exact', head: true }),
+    (supabase as any).from('prayer_rooms').select('*', { count: 'exact', head: true }),
+  ])
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="relative bg-background-dark overflow-hidden min-h-[560px] flex items-center">
-        <IslamicPattern opacity={0.08} />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+        {/* Singapore skyline photo with dark overlay */}
+        <Image
+          src="/images/singapore-hero.jpg"
+          alt="Singapore skyline at dusk"
+          fill
+          priority
+          className="object-cover object-center opacity-40"
+          sizes="100vw"
+        />
+        {/* Gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background-dark/60 via-background-dark/40 to-background-dark/80 z-[1]" />
+        <IslamicPattern opacity={0.06} />
+        <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <p className="text-accent text-sm font-bold uppercase tracking-widest mb-4">
             Singapore&apos;s Halal Ecosystem
           </p>
@@ -102,9 +140,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { n: '2,400+', label: 'Halal Listings' },
-              { n: '70+', label: 'Mosques' },
-              { n: '200+', label: 'Prayer Rooms' },
+              { n: `${(listingCount ?? 2400).toLocaleString()}+`, label: 'Halal Listings' },
+              { n: `${(mosqueCount ?? 70).toLocaleString()}+`, label: 'Mosques' },
+              { n: `${(prayerRoomCount ?? 200).toLocaleString()}+`, label: 'Prayer Rooms' },
               { n: '50+', label: 'Areas Covered' },
             ].map((s) => (
               <div key={s.label}>
@@ -190,6 +228,110 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Featured Businesses ──────────────────────────────── */}
+      {featuredListings && featuredListings.length > 0 && (
+        <section className="bg-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-extrabold text-charcoal">Featured Businesses</h2>
+              <Link href="/halal-food" className="text-primary text-sm font-medium hover:underline">See all →</Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredListings.map((listing: any) => (
+                <Link key={listing.id} href={`/restaurant/${listing.slug}`} className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden">
+                  <div className="h-40 bg-gray-100 overflow-hidden">
+                    {listing.photos?.[0] ? (
+                      <img src={listing.photos[0]} alt={listing.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-emerald-50">
+                        <span className="material-symbols-outlined text-4xl text-primary">restaurant</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-bold text-charcoal text-sm leading-tight">{listing.name}</h3>
+                      {listing.halal_status === 'muis_certified' && (
+                        <span className="shrink-0 bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">MUIS</span>
+                      )}
+                    </div>
+                    <p className="text-charcoal/50 text-xs mt-1 capitalize">{listing.area?.replace(/-/g, ' ')}</p>
+                    {listing.rating_avg && (
+                      <p className="text-charcoal/70 text-xs mt-1">⭐ {Number(listing.rating_avg).toFixed(1)} ({listing.rating_count})</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Upcoming Events ──────────────────────────────────── */}
+      {upcomingEvents && upcomingEvents.length > 0 && (
+        <section className="bg-warm-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-extrabold text-charcoal">Upcoming Events</h2>
+              <Link href="/events" className="text-primary text-sm font-medium hover:underline">See all →</Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {upcomingEvents.map((evt: any) => {
+                const start = new Date(evt.starts_at)
+                return (
+                  <Link key={evt.id} href={`/events/${evt.slug}`} className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden">
+                    <div className="h-32 bg-amber-50 overflow-hidden relative">
+                      {evt.images?.[0] ? (
+                        <img src={evt.images[0]} alt={evt.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center">
+                          <span className="text-accent font-extrabold text-2xl">{start.toLocaleDateString('en-SG', { day: 'numeric' })}</span>
+                          <span className="text-accent/70 text-xs font-bold uppercase">{start.toLocaleDateString('en-SG', { month: 'short' })}</span>
+                        </div>
+                      )}
+                      {evt.price_type === 'free' && (
+                        <span className="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">FREE</span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="font-bold text-charcoal text-sm leading-tight line-clamp-2">{evt.title}</p>
+                      <p className="text-charcoal/50 text-xs mt-1">{start.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                      <p className="text-charcoal/50 text-xs capitalize">{evt.area?.replace(/-/g, ' ')}</p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Newly Added ──────────────────────────────────────── */}
+      {newlyAdded && newlyAdded.length > 0 && (
+        <section className="bg-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-extrabold text-charcoal">Newly Added</h2>
+              <Link href="/halal-food" className="text-primary text-sm font-medium hover:underline">View all →</Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {newlyAdded.map((listing: any) => (
+                <Link key={listing.id} href={`/restaurant/${listing.slug}`} className="bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all p-4">
+                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-3">
+                    <span className="material-symbols-outlined text-primary text-xl">restaurant</span>
+                  </div>
+                  <h3 className="font-bold text-charcoal text-sm leading-tight line-clamp-2">{listing.name}</h3>
+                  <p className="text-charcoal/50 text-xs mt-1 capitalize">{listing.area?.replace(/-/g, ' ')}</p>
+                  {listing.halal_status === 'muis_certified' && (
+                    <span className="mt-2 inline-block bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">MUIS</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Newsletter CTA ───────────────────────────────────── */}
       <section className="relative bg-background-dark py-16 overflow-hidden">

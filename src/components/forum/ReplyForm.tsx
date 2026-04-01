@@ -20,10 +20,16 @@ export function ReplyForm({ postId }: Props) {
     setLoading(true)
     setError(null)
 
+    // captchaToken: to be populated by a Turnstile widget when
+    // NEXT_PUBLIC_TURNSTILE_SITE_KEY is configured. Passing null lets
+    // the server skip verification in dev (no secret set) while the
+    // production deployment can layer in the widget without a breaking change.
+    const captchaToken: string | null = null
+
     const res = await fetch('/api/forum/replies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post_id: postId, body: body.trim() }),
+      body: JSON.stringify({ post_id: postId, body: body.trim(), captchaToken }),
     })
 
     if (res.ok) {

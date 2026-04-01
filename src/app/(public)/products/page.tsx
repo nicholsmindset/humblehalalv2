@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ListingCard } from '@/components/listings/ListingCard'
-import { ISR_REVALIDATE, HalalStatus } from '@/config'
+import { generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema'
+import { ISR_REVALIDATE, HalalStatus, SITE_URL } from '@/config'
 import type { ListingCardProps } from '@/components/listings/ListingCard'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
@@ -176,18 +177,35 @@ export default async function HalalProductsPage({ searchParams }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'ItemList',
-            name: heading,
-            numberOfItems: listings.length,
-            itemListElement: listings.map((l, i) => ({
-              '@type': 'ListItem',
-              position: i + 1,
-              name: l.name,
-              url: `https://humblehalal.sg/restaurant/${l.slug}`,
-            })),
-          }),
+          __html: JSON.stringify([
+            generateBreadcrumbSchema([
+              { name: 'Home', url: SITE_URL },
+              { name: 'Halal Products', url: `${SITE_URL}/products` },
+              ...(category ? [{ name: CATEGORY_LABELS[category] ?? category, url: `${SITE_URL}/products?category=${category}` }] : []),
+            ]),
+            generateFAQSchema([
+              {
+                question: 'How do I find halal-certified products in Singapore?',
+                answer: 'Browse HumbleHalal\'s directory of MUIS-certified halal products across categories including food, cosmetics, supplements, and household items.',
+              },
+              {
+                question: 'Are all products on HumbleHalal halal certified?',
+                answer: 'Each listing shows its halal status. Look for the green MUIS Certified badge for products with active MUIS halal certification. Other listings may be Muslim-owned or self-declared halal.',
+              },
+            ]),
+            {
+              '@context': 'https://schema.org',
+              '@type': 'ItemList',
+              name: heading,
+              numberOfItems: listings.length,
+              itemListElement: listings.map((l, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                name: l.name,
+                url: `${SITE_URL}/products/${l.slug}`,
+              })),
+            },
+          ]),
         }}
       />
     </div>

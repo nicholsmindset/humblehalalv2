@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 const CATEGORIES = [
   { key: 'halal-food',  label: 'Halal Food' },
@@ -22,6 +23,19 @@ export default function NewPostPage() {
   const [tags, setTags] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // Auth guard — redirect to login if not signed in
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.replace('/login?next=/community/new')
+      } else {
+        setAuthChecked(true)
+      }
+    })
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,10 +45,15 @@ export default function NewPostPage() {
 
     const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean).slice(0, 5)
 
+    // captchaToken: populated by Turnstile widget when NEXT_PUBLIC_TURNSTILE_SITE_KEY is set.
+    // Until the Turnstile widget is wired, pass null — the server skips verification when
+    // TURNSTILE_SECRET_KEY is unset (dev), and rejects with 400 in production.
+    const captchaToken: string | null = null
+
     const res = await fetch('/api/forum/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title.trim(), body: body.trim(), category, tags: tagList }),
+      body: JSON.stringify({ title: title.trim(), body: body.trim(), category, tags: tagList, captchaToken }),
     })
 
     if (res.ok) {
@@ -45,6 +64,8 @@ export default function NewPostPage() {
       setLoading(false)
     }
   }
+
+  if (!authChecked) return null
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
