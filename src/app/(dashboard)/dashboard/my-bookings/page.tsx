@@ -11,11 +11,12 @@ export const metadata: Metadata = {
 }
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  confirmed: { label: 'Confirmed', className: 'bg-emerald-50 text-emerald-700' },
-  pending:   { label: 'Pending',   className: 'bg-amber-50 text-amber-700' },
-  cancelled: { label: 'Cancelled', className: 'bg-red-50 text-red-500' },
-  completed: { label: 'Completed', className: 'bg-gray-100 text-charcoal/50' },
-  failed:    { label: 'Failed',    className: 'bg-red-50 text-red-500' },
+  confirmed:      { label: 'Confirmed',   className: 'bg-emerald-50 text-emerald-700' },
+  test_confirmed: { label: 'Test Booking', className: 'bg-amber-50 text-amber-700' },
+  pending:        { label: 'Pending',     className: 'bg-amber-50 text-amber-700' },
+  cancelled:      { label: 'Cancelled',   className: 'bg-red-50 text-red-500' },
+  completed:      { label: 'Completed',   className: 'bg-gray-100 text-charcoal/50' },
+  failed:         { label: 'Failed',      className: 'bg-red-50 text-red-500' },
 }
 
 export default async function MyBookingsPage() {
@@ -136,7 +137,7 @@ export default async function MyBookingsPage() {
                       Booked {new Date(booking.created_at).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                     <div className="flex items-center gap-3">
-                      {booking.status === 'confirmed' && !isPast && (
+                      {(booking.status === 'confirmed' || booking.status === 'test_confirmed') && !isPast && (
                         <CancelButton bookingId={booking.id} />
                       )}
                       <Link

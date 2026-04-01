@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (rl.limited) return rl.response
 
   const body = await request.json()
-  const { bookingId, prebookId, transactionId, holderFirstName, holderLastName, holderEmail, holderPhone } = body
+  const { bookingId, prebookId, transactionId, holderFirstName, holderLastName, holderEmail, holderPhone, guestNationality = 'SG' } = body
 
   if (!bookingId || !prebookId || !transactionId || !holderFirstName || !holderLastName || !holderEmail) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -38,45 +38,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid prebook reference' }, { status: 400 })
   }
 
-  let liteapi
-  try {
-    liteapi = getLiteApiClient()
-  } catch {
-    return NextResponse.json({ error: 'Travel booking unavailable' }, { status: 503 })
-  }
+  const isSandbox = transactionId.startsWith('sandbox_')
+    || (process.env.LITEAPI_API_KEY ?? '').startsWith('sand_')
 
-  // Call LiteAPI book — finalise the booking after payment
-  let bookResult: any
-  try {
-    bookResult = await (liteapi as any).book({
-      prebookId,
-      holder: {
-        firstName: holderFirstName,
-        lastName: holderLastName,
-        email: holderEmail,
-        phone: holderPhone ?? undefined,
-      },
-      payment: {
-        method: 'TRANSACTION_ID',
-        transactionId,
-      },
-    })
-  } catch (err: any) {
-    console.error('[travel/book] LiteAPI error:', err?.message)
-    // Mark booking failed
-    await db.from('travel_bookings').update({ status: 'failed' }).eq('id', bookingId)
-    return NextResponse.json({ error: 'Booking confirmation failed. Your payment has not been charged.' }, { status: 502 })
-  }
+  let litapiBookingId: string | null = null
+  let hotelConfirmationCode: string | null = null
+  let bookData: any = null
 
-  const bookData = bookResult?.data ?? bookResult
-  const litapiBookingId = bookData?.bookingId
-  const hotelConfirmationCode = bookData?.supplierBookingName ?? bookData?.hotelConfirmationCode
+  if (isSandbox) {
+    // Sandbox mode — skip real LiteAPI book call, simulate confirmation
+    console.log('[travel/book] Sandbox mode — skipping LiteAPI book call')
+    litapiBookingId = `sandbox_${bookingId.slice(0, 8)}`
+    hotelConfirmationCode = `TEST-${Date.now().toString(36).toUpperCase()}`
+  } else {
+    let liteapi
+    try {
+      liteapi = getLiteApiClient()
+    } catch {
+      return NextResponse.json({ error: 'Travel booking unavailable' }, { status: 503 })
+    }
+
+    // Call LiteAPI book — finalise the booking after payment
+    let bookResult: any
+    try {
+      bookResult = await (liteapi as any).book({
+        prebookId,
+        holder: {
+          firstName: holderFirstName,
+          lastName: holderLastName,
+          email: holderEmail,
+          phone: holderPhone ?? undefined,
+        },
+        payment: {
+          method: 'TRANSACTION_ID',
+          transactionId,
+        },
+        guestNationality,
+      })
+    } catch (err: any) {
+      console.error('[travel/book] LiteAPI error:', err?.message)
+      await db.from('travel_bookings').update({ status: 'failed' }).eq('id', bookingId)
+      return NextResponse.json({ error: 'Booking confirmation failed. Your payment has not been charged.' }, { status: 502 })
+    }
+
+    bookData = bookResult?.data ?? bookResult
+    litapiBookingId = bookData?.bookingId ?? null
+    hotelConfirmationCode = bookData?.supplierBookingName ?? bookData?.hotelConfirmationCode ?? null
+  }
 
   // Update booking to confirmed
   await db.from('travel_bookings').update({
-    status: 'confirmed',
-    liteapi_booking_id: litapiBookingId ?? null,
-    hotel_confirmation_code: hotelConfirmationCode ?? null,
+    status: isSandbox ? 'test_confirmed' : 'confirmed',
+    liteapi_booking_id: litapiBookingId,
+    hotel_confirmation_code: hotelConfirmationCode,
     holder_first_name: holderFirstName,
     holder_last_name: holderLastName,
     holder_email: holderEmail,
@@ -109,6 +123,6 @@ export async function POST(request: NextRequest) {
     bookingId,
     liteapiBookingId: litapiBookingId,
     confirmationCode: hotelConfirmationCode,
-    redirect_url: `${SITE_URL}/travel/bookings/${bookingId}`,
+    redirect_url: `/travel/bookings/${bookingId}`,
   })
 }

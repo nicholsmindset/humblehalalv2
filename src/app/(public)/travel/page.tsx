@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { HotelSearchBar } from '@/components/travel/HotelSearchBar'
+import { generateBreadcrumbSchema, generateFAQSchema } from '@/lib/seo/schema'
+import { SITE_URL } from '@/config'
 
 export const metadata: Metadata = {
   title: 'Halal Travel — Muslim-Friendly Hotels & Flights | HumbleHalal',
@@ -27,8 +29,31 @@ const TOP_CITIES = [
   { name: 'Maldives', slug: 'maldives', emoji: '🏝️', tag: 'Island luxury & halal stays' },
 ]
 
+const breadcrumbSchema = generateBreadcrumbSchema([
+  { name: 'Home', url: SITE_URL },
+  { name: 'Halal Travel', url: `${SITE_URL}/travel` },
+])
+
+const travelFaqSchema = generateFAQSchema([
+  {
+    question: 'How do I find Muslim-friendly hotels on HumbleHalal?',
+    answer: 'Use the hotel search bar on this page. Enter your destination, travel dates, and number of guests. Every result is scored for mosque proximity, halal food density, prayer rooms and halal breakfast availability.',
+  },
+  {
+    question: 'What is the Muslim-Friendly Score?',
+    answer: 'Each hotel is rated 1–5 based on distance to the nearest mosque, number of halal restaurants within 1km, availability of in-room prayer facilities, and halal breakfast options.',
+  },
+  {
+    question: 'Can I filter hotels by Muslim-friendly criteria?',
+    answer: 'Yes. On the hotel search results page you can filter by Muslim-Friendly Only (score ≥ 3/5), minimum star rating, and sort by price, guest rating, or Muslim-friendliness.',
+  },
+])
+
 export default function TravelHubPage() {
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(travelFaqSchema) }} />
     <div>
       {/* Hero */}
       <section className="bg-background-dark relative overflow-hidden">
@@ -122,5 +147,6 @@ export default function TravelHubPage() {
         </div>
       </section>
     </div>
+    </>
   )
 }

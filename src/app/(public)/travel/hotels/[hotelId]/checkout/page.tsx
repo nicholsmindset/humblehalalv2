@@ -35,6 +35,7 @@ function CheckoutContent() {
 
   const [step, setStep] = useState<Step>('form')
   const [sdkReady, setSdkReady] = useState(false)
+  const [sdkTimeout, setSdkTimeout] = useState(false)
 
   // Holder form state
   const [firstName, setFirstName] = useState('')
@@ -47,6 +48,7 @@ function CheckoutContent() {
   const [bookingId, setBookingId]       = useState('')
   const [secretKey, setSecretKey]       = useState('')
   const [transactionId, setTransactionId] = useState('')
+  const [sandboxMode, setSandboxMode]   = useState(false)
 
   const [error, setError]       = useState<string | null>(null)
   const [loading, setLoading]   = useState(false)
@@ -54,28 +56,53 @@ function CheckoutContent() {
   // Initialize payment SDK after secretKey is set and SDK is ready
   const initPaymentSdk = useCallback(() => {
     if (!window.liteAPIPayment || !secretKey) return
-    window.liteAPIPayment.init({
-      secretKey,
-      containerId: 'liteapi-payment-container',
-      onSuccess: (data) => {
-        const txId = data?.transactionId ?? transactionId
-        setTransactionId(txId)
-        handleBook(txId)
-      },
-      onError: (err) => {
-        console.error('[checkout] payment error:', err)
-        setError('Payment failed. Please try again.')
-        setStep('form')
-      },
-    })
+    try {
+      window.liteAPIPayment.init({
+        secretKey,
+        containerId: 'liteapi-payment-container',
+        onSuccess: (data) => {
+          const txId = data?.transactionId ?? transactionId
+          setTransactionId(txId)
+          handleBook(txId)
+        },
+        onError: (err) => {
+          console.error('[checkout] payment SDK error:', err)
+          setError('Payment failed. Please try again.')
+          setStep('form')
+        },
+      })
+    } catch (err) {
+      console.error('[checkout] payment SDK init failed:', err)
+      // If SDK init throws, treat as sandbox
+      setSandboxMode(true)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secretKey, transactionId])
 
+  // When payment step is active, try to init SDK or detect sandbox
   useEffect(() => {
-    if (step === 'payment' && sdkReady && secretKey) {
+    if (step !== 'payment') return
+
+    if (sandboxMode || !secretKey) {
+      // No SDK needed in sandbox mode
+      return
+    }
+
+    if (sdkReady && secretKey) {
       initPaymentSdk()
     }
-  }, [step, sdkReady, secretKey, initPaymentSdk])
+
+    // If SDK doesn't load within 8s, show sandbox fallback
+    const timer = setTimeout(() => {
+      if (!sdkReady) {
+        console.warn('[checkout] Payment SDK load timeout — falling back to sandbox mode')
+        setSdkTimeout(true)
+        setSandboxMode(true)
+      }
+    }, 8000)
+
+    return () => clearTimeout(timer)
+  }, [step, sdkReady, secretKey, sandboxMode, initPaymentSdk])
 
   async function handlePrebook(e: React.FormEvent) {
     e.preventDefault()
@@ -86,7 +113,22 @@ function CheckoutContent() {
       const res = await fetch('/api/travel/prebook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offerId, holderFirstName: firstName, holderLastName: lastName, holderEmail: email }),
+        body: JSON.stringify({
+          offerId,
+          hotelId,
+          hotelName,
+          hotelCity: city || searchParams.get('dest') || '',
+          hotelCountry: '',
+          checkIn: checkin,
+          checkOut: checkout,
+          guests: parseInt(searchParams.get('guests') ?? '2'),
+          totalAmount: amount ? parseFloat(amount) : 0,
+          currency,
+          holderFirstName: firstName,
+          holderLastName: lastName,
+          holderEmail: email,
+          guestNationality: 'SG',
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Prebook failed')
@@ -94,6 +136,7 @@ function CheckoutContent() {
       setBookingId(data.bookingId)
       setSecretKey(data.secretKey ?? '')
       setTransactionId(data.transactionId ?? '')
+      setSandboxMode(data.sandboxMode ?? !data.secretKey)
       setStep('payment')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to prepare booking')
@@ -117,6 +160,7 @@ function CheckoutContent() {
           holderLastName: lastName,
           holderEmail: email,
           holderPhone: phone || undefined,
+          guestNationality: 'SG',
         }),
       })
       const data = await res.json()
@@ -129,6 +173,13 @@ function CheckoutContent() {
     }
   }
 
+  function handleSandboxPayment() {
+    // In sandbox mode, simulate payment with the existing transactionId or a test ID
+    const txId = transactionId || `sandbox_${Date.now()}`
+    setTransactionId(txId)
+    handleBook(txId)
+  }
+
   const nights = checkin && checkout
     ? Math.round((new Date(checkout).getTime() - new Date(checkin).getTime()) / 86400000)
     : null
@@ -139,40 +190,52 @@ function CheckoutContent() {
 
   return (
     <>
-      <Script
-        src="https://payment-wrapper.liteapi.travel/dist/liteAPIPayment.js"
-        strategy="afterInteractive"
-        onReady={() => setSdkReady(true)}
-      />
+      {/* Only load payment SDK if we have a secretKey */}
+      {secretKey && (
+        <Script
+          src="https://payment-wrapper.liteapi.travel/dist/liteAPIPayment.js"
+          strategy="afterInteractive"
+          onReady={() => setSdkReady(true)}
+          onError={() => {
+            console.error('[checkout] Payment SDK script failed to load')
+            setSandboxMode(true)
+          }}
+        />
+      )}
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumb */}
         <nav className="text-xs text-charcoal/50 mb-6 flex items-center gap-1.5">
           <Link href="/travel/hotels" className="hover:text-primary transition-colors">Hotels</Link>
           <span>/</span>
-          <Link href={`/travel/hotels/${hotelId}`} className="hover:text-primary transition-colors">{hotelName}</Link>
+          <Link href={`/travel/hotels/${hotelId}?${searchParams.toString()}`} className="hover:text-primary transition-colors">{hotelName}</Link>
           <span>/</span>
           <span className="text-charcoal font-semibold">Checkout</span>
         </nav>
 
         {/* Booking summary card */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-          <h2 className="font-bold text-charcoal text-sm mb-3">Booking summary</h2>
+        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+          <p className="text-xs font-bold text-charcoal/40 uppercase tracking-wide mb-3">Booking summary</p>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-semibold text-charcoal">{hotelName}</p>
-              {city && <p className="text-xs text-charcoal/50">📍 {city}</p>}
+              <p className="font-bold text-charcoal text-base">{hotelName}</p>
+              {city && <p className="text-xs text-charcoal/50 mt-0.5">{city}</p>}
               {checkin && checkout && (
                 <p className="text-xs text-charcoal/50 mt-1">
-                  {checkin} → {checkout}
-                  {nights && ` (${nights} night${nights !== 1 ? 's' : ''})`}
+                  {new Date(checkin).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })}
+                  {' — '}
+                  {new Date(checkout).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {nights ? ` (${nights} night${nights !== 1 ? 's' : ''})` : ''}
                 </p>
               )}
+              <p className="text-xs text-charcoal/40 mt-1">
+                {searchParams.get('guests') ?? '2'} guest{(parseInt(searchParams.get('guests') ?? '2')) !== 1 ? 's' : ''}
+              </p>
             </div>
             {formattedAmount && (
-              <div className="text-right">
-                <p className="font-bold text-charcoal text-lg">{formattedAmount}</p>
-                <p className="text-xs text-charcoal/40">total</p>
+              <div className="text-right flex-shrink-0">
+                <p className="font-extrabold text-charcoal text-xl">{formattedAmount}</p>
+                <p className="text-xs text-charcoal/40">total incl. taxes</p>
               </div>
             )}
           </div>
@@ -180,36 +243,53 @@ function CheckoutContent() {
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-6">
-          {(['form', 'payment', 'booking'] as Step[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                step === s
-                  ? 'bg-primary text-white'
-                  : ['payment', 'booking', 'done'].indexOf(step) > ['form', 'payment', 'booking'].indexOf(s)
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-gray-100 text-charcoal/40'
-              }`}>
-                {i + 1}
+          {(['form', 'payment', 'booking'] as Step[]).map((s, i) => {
+            const stepOrder = ['form', 'payment', 'booking', 'done']
+            const currentIdx = stepOrder.indexOf(step)
+            const thisIdx = stepOrder.indexOf(s)
+            const isActive = step === s
+            const isCompleted = currentIdx > thisIdx
+            return (
+              <div key={s} className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                  isActive
+                    ? 'bg-primary text-white'
+                    : isCompleted
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-gray-100 text-charcoal/40'
+                }`}>
+                  {isCompleted ? '✓' : i + 1}
+                </div>
+                <span className={`text-xs font-semibold ${isActive ? 'text-charcoal' : 'text-charcoal/40'}`}>
+                  {s === 'form' ? 'Guest details' : s === 'payment' ? 'Payment' : 'Confirm'}
+                </span>
+                {i < 2 && <div className="w-8 h-px bg-gray-200" />}
               </div>
-              <span className={`text-xs font-semibold ${step === s ? 'text-charcoal' : 'text-charcoal/40'}`}>
-                {s === 'form' ? 'Guest details' : s === 'payment' ? 'Payment' : 'Confirming'}
-              </span>
-              {i < 2 && <div className="w-8 h-px bg-gray-200" />}
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-600">
-            {error}
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-600 flex items-start gap-2">
+            <span className="material-symbols-outlined text-base mt-0.5 flex-shrink-0">error</span>
+            <div>
+              <p>{error}</p>
+              {step === 'form' && (
+                <button onClick={() => setError(null)} className="text-xs text-red-500 hover:underline mt-1">
+                  Dismiss
+                </button>
+              )}
+            </div>
           </div>
         )}
 
         {/* Step: Guest details form */}
         {step === 'form' && (
           <form onSubmit={handlePrebook} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <h1 className="font-bold text-charcoal text-lg">Guest details</h1>
-            <p className="text-sm text-charcoal/50">The lead guest must be present at check-in.</p>
+            <div>
+              <h1 className="font-bold text-charcoal text-lg">Guest details</h1>
+              <p className="text-sm text-charcoal/50 mt-0.5">Lead guest must be present at check-in with valid ID.</p>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -220,7 +300,7 @@ function CheckoutContent() {
                   onChange={(e) => setFirstName(e.target.value)}
                   required
                   placeholder="Ahmad"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
               <div>
@@ -231,7 +311,7 @@ function CheckoutContent() {
                   onChange={(e) => setLastName(e.target.value)}
                   required
                   placeholder="Rahman"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -244,7 +324,7 @@ function CheckoutContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="ahmad@example.com"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
               />
               <p className="text-xs text-charcoal/40 mt-1">Booking confirmation will be sent here</p>
             </div>
@@ -256,7 +336,7 @@ function CheckoutContent() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+65 9123 4567"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
               />
             </div>
 
@@ -264,9 +344,16 @@ function CheckoutContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="w-full bg-primary text-white font-bold py-3.5 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Preparing booking…' : 'Continue to payment →'}
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Preparing booking…
+                  </>
+                ) : (
+                  'Continue to payment'
+                )}
               </button>
             </div>
 
@@ -279,15 +366,88 @@ function CheckoutContent() {
         {/* Step: Payment */}
         {step === 'payment' && (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h1 className="font-bold text-charcoal text-lg mb-4">Secure payment</h1>
-            <div id="liteapi-payment-container" className="min-h-[200px]">
-              {!sdkReady && (
-                <div className="flex items-center justify-center py-12 text-charcoal/40">
-                  <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mr-3" />
-                  Loading payment…
+            {sandboxMode ? (
+              /* Sandbox / test mode — no real payment SDK */
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="font-bold text-charcoal text-lg">Payment</h1>
+                  <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    TEST MODE
+                  </span>
                 </div>
-              )}
-            </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+                  <p className="font-semibold mb-1">Sandbox Environment</p>
+                  <p className="text-xs">
+                    Payment processing is in test mode. No real charges will be made.
+                    Click the button below to simulate a successful payment.
+                  </p>
+                </div>
+
+                {/* Order summary */}
+                <div className="border border-gray-100 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-charcoal/60">Room ({nights ?? 1} night{nights !== 1 ? 's' : ''})</span>
+                    <span className="font-semibold text-charcoal">{formattedAmount ?? 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-charcoal/60">Taxes & fees</span>
+                    <span className="text-charcoal/60">Included</span>
+                  </div>
+                  <div className="border-t border-gray-100 pt-2 flex justify-between text-sm font-bold">
+                    <span className="text-charcoal">Total</span>
+                    <span className="text-primary">{formattedAmount ?? 'N/A'}</span>
+                  </div>
+                </div>
+
+                {/* Guest info review */}
+                <div className="border border-gray-100 rounded-lg p-4 text-xs text-charcoal/60 space-y-1">
+                  <p><span className="font-semibold text-charcoal">Guest:</span> {firstName} {lastName}</p>
+                  <p><span className="font-semibold text-charcoal">Email:</span> {email}</p>
+                  {phone && <p><span className="font-semibold text-charcoal">Phone:</span> {phone}</p>}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setStep('form'); setError(null) }}
+                    className="flex-1 border border-gray-200 text-charcoal font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSandboxPayment}
+                    className="flex-[2] bg-accent text-charcoal font-bold py-3 rounded-xl hover:bg-accent/90 transition-colors text-sm flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-base">lock</span>
+                    Complete test payment
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Live payment SDK */
+              <div>
+                <h1 className="font-bold text-charcoal text-lg mb-4">Secure payment</h1>
+                <div id="liteapi-payment-container" className="min-h-[200px]">
+                  {!sdkReady && !sdkTimeout && (
+                    <div className="flex items-center justify-center py-12 text-charcoal/40">
+                      <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin mr-3" />
+                      Loading payment form…
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => { setStep('form'); setError(null) }}
+                    className="text-sm text-charcoal/50 hover:text-charcoal font-semibold"
+                  >
+                    ← Back to guest details
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -299,6 +459,22 @@ function CheckoutContent() {
             <p className="text-sm text-charcoal/50 mt-1">This usually takes a few seconds</p>
           </div>
         )}
+
+        {/* Trust signals */}
+        <div className="mt-8 flex items-center justify-center gap-6 text-xs text-charcoal/30">
+          <span className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-sm">lock</span>
+            Secure checkout
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-sm">verified</span>
+            Instant confirmation
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-sm">support_agent</span>
+            24/7 support
+          </span>
+        </div>
       </div>
     </>
   )
