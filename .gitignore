@@ -43,3 +43,8 @@ next-env.d.ts
 /playwright-report/
 /test-results/
 /coverage/
+._*
+
+# Claude Code worktrees — local agent checkouts, never commit
+.claude/worktrees/
+.claude/settings.local.json
