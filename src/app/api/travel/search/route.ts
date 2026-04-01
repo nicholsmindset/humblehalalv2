@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getLiteApiClient } from '@/lib/liteapi/client'
 import { enrichHotels, type HotelLocation } from '@/lib/liteapi/enrich'

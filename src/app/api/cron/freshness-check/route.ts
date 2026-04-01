@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { type NextRequest, NextResponse } from 'next/server'
 import { verifyCronSecret } from '@/lib/utils/cron-auth'
 
