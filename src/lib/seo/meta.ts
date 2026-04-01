@@ -1,0 +1,124 @@
+import type { Metadata } from 'next'
+import { SITE_URL, SITE_NAME } from '@/config'
+
+// ── Title builder ─────────────────────────────────────────────────────────────
+// Pattern: [Primary Keyword] | HumbleHalal
+export function buildTitle(...parts: (string | undefined | null)[]): string {
+  const filtered = parts.filter(Boolean) as string[]
+  if (filtered.length === 0) return SITE_NAME
+  return `${filtered.join(' ')} | ${SITE_NAME}`
+}
+
+// ── Description builder ───────────────────────────────────────────────────────
+// Returns 150–160 char description, never truncating meaningful content.
+export function buildDescription(text: string): string {
+  const trimmed = text.trim()
+  if (trimmed.length <= 160) return trimmed
+  // Truncate at last word boundary before 157 chars then add '...'
+  return trimmed.slice(0, 157).replace(/\s+\S*$/, '') + '...'
+}
+
+// ── Canonical URL ─────────────────────────────────────────────────────────────
+export function getCanonicalUrl(path: string): string {
+  const clean = path.startsWith('/') ? path : `/${path}`
+  return `${SITE_URL}${clean}`
+}
+
+// ── Open Graph image ──────────────────────────────────────────────────────────
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.jpg`
+
+// ── Full page metadata factory ────────────────────────────────────────────────
+export function buildMetadata(params: {
+  title: string
+  description: string
+  path: string
+  image?: string
+  type?: 'website' | 'article'
+  publishedTime?: string
+  modifiedTime?: string
+  keywords?: string[]
+  noIndex?: boolean
+}): Metadata {
+  const canonical = getCanonicalUrl(params.path)
+  const image = params.image ?? DEFAULT_OG_IMAGE
+
+  return {
+    title: buildTitle(params.title),
+    description: buildDescription(params.description),
+    ...(params.keywords && { keywords: params.keywords }),
+    alternates: { canonical },
+    openGraph: {
+      title: buildTitle(params.title),
+      description: buildDescription(params.description),
+      url: canonical,
+      siteName: SITE_NAME,
+      images: [{ url: image, width: 1200, height: 630 }],
+      locale: 'en_SG',
+      type: params.type ?? 'website',
+      ...(params.publishedTime && { publishedTime: params.publishedTime }),
+      ...(params.modifiedTime && { modifiedTime: params.modifiedTime }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: buildTitle(params.title),
+      description: buildDescription(params.description),
+      images: [image],
+    },
+    robots: params.noIndex
+      ? { index: false, follow: false }
+      : { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  }
+}
+
+// ── pSEO listing page metadata ────────────────────────────────────────────────
+export function buildListingPageMeta(params: {
+  cuisine?: string
+  area?: string
+  category?: string
+  vertical?: string
+}): Metadata {
+  const { cuisine, area, category, vertical } = params
+
+  const titleParts: string[] = []
+  const descParts: string[] = []
+
+  if (cuisine) {
+    const label = cuisine.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    titleParts.push(`${label} Halal Food`)
+    descParts.push(`${label} halal restaurants`)
+  } else if (category) {
+    const label = category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    titleParts.push(`Halal ${label}`)
+    descParts.push(`halal ${label.toLowerCase()} businesses`)
+  } else if (vertical) {
+    titleParts.push(`Halal ${vertical.replace(/\b\w/g, (c) => c.toUpperCase())}`)
+    descParts.push(`halal ${vertical.toLowerCase()}`)
+  } else {
+    titleParts.push('Halal Directory')
+    descParts.push('halal businesses')
+  }
+
+  if (area) {
+    const areaLabel = area.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    titleParts.push(`in ${areaLabel}`)
+    descParts.push(`in ${areaLabel}`)
+  } else {
+    descParts.push('in Singapore')
+  }
+
+  const title = titleParts.join(' ')
+  const description = buildDescription(
+    `Find ${descParts.join(' ')}. MUIS-certified listings with reviews, directions and opening hours.`
+  )
+
+  const path = buildPath(params)
+  return buildMetadata({ title, description, path })
+}
+
+function buildPath({ cuisine, area, category }: { cuisine?: string; area?: string; category?: string }): string {
+  if (cuisine && area) return `/halal-food/${cuisine}/${area}`
+  if (cuisine)         return `/halal-food/${cuisine}`
+  if (category && area) return `/business/${category}/${area}`
+  if (category)         return `/business/${category}`
+  return '/halal-food'
+}
