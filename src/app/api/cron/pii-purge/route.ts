@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyCronSecret } from '@/lib/utils/cron-auth'
 
-export const dynamic = 'force-dynamic'
-
 export async function POST(req: NextRequest) {
   const deny = verifyCronSecret(req)
   if (deny) return deny
