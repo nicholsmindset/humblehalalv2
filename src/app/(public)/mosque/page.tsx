@@ -6,8 +6,13 @@ import { MosqueCard } from '@/components/mosques/MosqueCard'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
+const SORT_OPTIONS = [
+  { key: 'name', label: 'A–Z', icon: 'sort_by_alpha' },
+  { key: 'newest', label: 'Newest', icon: 'schedule' },
+] as const
+
 interface Props {
-  searchParams: Promise<{ area?: string; q?: string; page?: string }>
+  searchParams: Promise<{ area?: string; q?: string; page?: string; sort?: string }>
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -24,7 +29,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 const PAGE_SIZE = 24
 
 export default async function MosquePage({ searchParams }: Props) {
-  const { area, q, page: pageStr } = await searchParams
+  const { area, q, page: pageStr, sort = 'name' } = await searchParams
   const page = Math.max(1, parseInt(pageStr ?? '1', 10))
   const offset = (page - 1) * PAGE_SIZE
 
@@ -33,11 +38,16 @@ export default async function MosquePage({ searchParams }: Props) {
   let query = supabase
     .from('mosques')
     .select('id, slug, name, area, address, facilities, prayer_room_available, wheelchair_accessible, photos', { count: 'exact' })
-    .order('name', { ascending: true })
     .range(offset, offset + PAGE_SIZE - 1)
 
   if (area) query = query.eq('area', area)
   if (q) query = query.ilike('name', `%${q}%`)
+
+  if (sort === 'newest') {
+    query = query.order('created_at', { ascending: false })
+  } else {
+    query = query.order('name', { ascending: true })
+  }
 
   const { data: mosques, count } = (await query) as any
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
@@ -74,6 +84,25 @@ export default async function MosquePage({ searchParams }: Props) {
             }`}
           >
             {a.replace(/-/g, ' ')}
+          </Link>
+        ))}
+      </div>
+
+      {/* Sort options */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-xs text-charcoal/40 font-medium">Sort:</span>
+        {SORT_OPTIONS.map((opt) => (
+          <Link
+            key={opt.key}
+            href={`/mosque?${new URLSearchParams({ ...(area ? { area } : {}), sort: opt.key }).toString()}`}
+            className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+              sort === opt.key
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-charcoal/70 border-gray-200 hover:border-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[11px]">{opt.icon}</span>
+            {opt.label}
           </Link>
         ))}
       </div>

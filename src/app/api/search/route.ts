@@ -37,17 +37,15 @@ export async function GET(request: NextRequest) {
     return { vertical: v, items: (data ?? []) as unknown[] }
   }
 
-  // ── Food / Restaurants ──────────────────────────────────────
+  // ── Food / Restaurants — use FTS + trigram RPC ────────────
   if (shouldInclude('food')) {
     queryPromises.push(runQuery('food',
-      supabase
-        .from('listings')
-        .select('id, slug, name, area, halal_status, photos, vertical')
-        .eq('vertical', 'food')
-        .eq('status', 'active')
-        .or(`name.ilike.${pattern},description.ilike.${pattern}`)
-        .order('avg_rating', { ascending: false })
-        .limit(MAX_RESULTS_PER_VERTICAL) as any
+      (supabase as any).rpc('search_businesses', {
+        query_text: q,
+        area_filter: area || null,
+        vertical_filter: 'food',
+        lim: MAX_RESULTS_PER_VERTICAL,
+      }) as any
     ))
   }
 

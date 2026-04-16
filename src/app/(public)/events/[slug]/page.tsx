@@ -4,6 +4,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SITE_URL } from '@/config'
 import TicketSelector from '@/components/events/TicketSelector'
+import { ShareButtons } from '@/components/ui/ShareButtons'
+
+function toGCalDate(isoStr: string) {
+  return new Date(isoStr).toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z'
+}
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -69,6 +74,15 @@ export default async function EventDetailPage({ params }: Props) {
     ? Math.min(...tickets.map((t: any) => t.price))
     : null
   const allSoldOut = tickets.length > 0 && tickets.every((t: any) => t.quantity - t.sold_count <= 0)
+
+  // Add to Calendar URL
+  const gcalUrl = new URL('https://calendar.google.com/calendar/render')
+  gcalUrl.searchParams.set('action', 'TEMPLATE')
+  gcalUrl.searchParams.set('text', evt.title)
+  gcalUrl.searchParams.set('dates', `${toGCalDate(evt.starts_at)}/${toGCalDate(evt.ends_at ?? evt.starts_at)}`)
+  if (evt.venue) gcalUrl.searchParams.set('location', `${evt.venue}, Singapore`)
+  if (evt.description) gcalUrl.searchParams.set('details', evt.description.slice(0, 500))
+  gcalUrl.searchParams.set('sprop', `website:${SITE_URL}/events/${evt.slug}`)
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -235,6 +249,28 @@ export default async function EventDetailPage({ params }: Props) {
               )}
             </div>
           )}
+
+          {/* Add to Calendar */}
+          {!isPast && (
+            <a
+              href={gcalUrl.toString()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full border border-gray-200 text-charcoal/70 rounded-lg px-4 py-2.5 text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-base">calendar_add_on</span>
+              Add to Calendar
+            </a>
+          )}
+
+          {/* Share */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-xs text-charcoal/40 uppercase tracking-wide font-medium mb-3">Share this event</p>
+            <ShareButtons
+              url={`${SITE_URL}/events/${evt.slug}`}
+              title={evt.title}
+            />
+          </div>
 
           <Link
             href="/events"

@@ -6,8 +6,13 @@ import { EventCard } from '@/components/events/EventCard'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
+const SORT_OPTIONS = [
+  { key: 'soonest', label: 'Soonest', icon: 'event' },
+  { key: 'newest', label: 'Newly Added', icon: 'schedule' },
+] as const
+
 interface Props {
-  searchParams: Promise<{ type?: string; area?: string; page?: string }>
+  searchParams: Promise<{ type?: string; area?: string; page?: string; sort?: string }>
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -38,7 +43,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 }
 
 export default async function EventsPage({ searchParams }: Props) {
-  const { type, area, page: pageStr } = await searchParams
+  const { type, area, page: pageStr, sort = 'soonest' } = await searchParams
   const page = Math.max(1, parseInt(pageStr ?? '1', 10))
   const offset = (page - 1) * PAGE_SIZE
 
@@ -49,11 +54,16 @@ export default async function EventsPage({ searchParams }: Props) {
     .select('id, slug, title, area, venue, starts_at, ends_at, price_type, images, organiser', { count: 'exact' })
     .eq('status', 'active')
     .gte('ends_at', new Date().toISOString())
-    .order('starts_at', { ascending: true })
     .range(offset, offset + PAGE_SIZE - 1)
 
   if (area) query = query.eq('area', area)
   if (type) query = query.eq('category', type)
+
+  if (sort === 'newest') {
+    query = query.order('created_at', { ascending: false })
+  } else {
+    query = query.order('starts_at', { ascending: true })
+  }
 
   const { data: events, count } = (await query) as any
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
@@ -82,6 +92,25 @@ export default async function EventsPage({ searchParams }: Props) {
             className={`text-sm font-medium px-3 py-1 rounded-full transition-colors ${type === val ? 'text-primary font-bold' : 'text-charcoal/60 hover:text-primary'}`}
           >
             {label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Sort options */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-xs text-charcoal/40 font-medium">Sort:</span>
+        {SORT_OPTIONS.map((opt) => (
+          <Link
+            key={opt.key}
+            href={`/events?${new URLSearchParams({ ...(area ? { area } : {}), ...(type ? { type } : {}), sort: opt.key }).toString()}`}
+            className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+              sort === opt.key
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-charcoal/70 border-gray-200 hover:border-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[11px]">{opt.icon}</span>
+            {opt.label}
           </Link>
         ))}
       </div>
