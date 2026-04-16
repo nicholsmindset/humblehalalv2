@@ -13,14 +13,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { data: listings },
     { data: mosques },
     { data: events },
-    { data: classifieds },
     { data: prayerRooms },
     { data: blogPosts },
   ] = (await Promise.all([
     db.from('listings').select('slug, updated_at').eq('status', 'active').limit(5000),
     db.from('mosques').select('slug, updated_at').limit(2000),
     db.from('events').select('slug, updated_at').eq('status', 'active').gte('ends_at', new Date().toISOString()).limit(500),
-    db.from('classifieds').select('slug, updated_at').eq('status', 'active').limit(2000),
     db.from('prayer_rooms').select('slug, updated_at').limit(500),
     db.from('ai_content_drafts').select('id, updated_at').eq('content_type', 'blog').eq('status', 'published').limit(1000),
   ])) as any[]
@@ -33,7 +31,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/halal-food`,         lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
     { url: `${SITE_URL}/events`,             lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
     { url: `${SITE_URL}/mosque`,             lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
-    { url: `${SITE_URL}/classifieds`,        lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
     { url: `${SITE_URL}/blog`,               lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
     { url: `${SITE_URL}/prayer-times/singapore`, lastModified: now, changeFrequency: 'daily',  priority: 0.8 },
     { url: `${SITE_URL}/prayer-rooms`,       lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
@@ -72,14 +69,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  // ── Classifieds ───────────────────────────────────────────
-  const classifiedPages: MetadataRoute.Sitemap = (classifieds ?? []).map((c: any) => ({
-    url: `${SITE_URL}/classifieds/${c.slug}`,
-    lastModified: c.updated_at ?? now,
-    changeFrequency: 'daily' as const,
-    priority: 0.6,
-  }))
-
   // ── Prayer room detail pages ──────────────────────────────
   const prayerRoomPages: MetadataRoute.Sitemap = (prayerRooms ?? []).map((r: any) => ({
     url: `${SITE_URL}/prayer-rooms/${r.slug}`,
@@ -102,7 +91,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...listingPages,
     ...mosquePages,
     ...eventPages,
-    ...classifiedPages,
     ...prayerRoomPages,
     ...blogPages,
   ]

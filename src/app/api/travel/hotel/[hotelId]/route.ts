@@ -18,9 +18,14 @@ export async function GET(
   }
 
   // Fetch hotel detail + reviews in parallel
+  const checkin = request.nextUrl.searchParams.get('checkin') ?? ''
+  const checkout = request.nextUrl.searchParams.get('checkout') ?? ''
+  const guestsParam = request.nextUrl.searchParams.get('guests') ?? ''
+  const currency = request.nextUrl.searchParams.get('currency') ?? 'SGD'
+
   const [detailResult, reviewsResult] = await Promise.allSettled([
-    (liteapi as any).getHotel({ hotelId }),
-    (liteapi as any).getHotelReviews({ hotelId, limit: 10 }),
+    (liteapi as any).getHotelDetails(hotelId),
+    (liteapi as any).getHotelReviews(hotelId, 10),
   ])
 
   if (detailResult.status === 'rejected') {
@@ -33,16 +38,41 @@ export async function GET(
     ? (reviewsResult.value as any)?.data ?? []
     : []
 
+  // Fetch rates when search params are provided so the booking panel has a real offerId
+  let rates: any[] = []
+  if (checkin && checkout) {
+    try {
+      const adults = Math.max(1, parseInt(guestsParam) || 2)
+      const ratesResult = await (liteapi as any).getFullRates({
+        hotelIds: [hotelId],
+        checkin,
+        checkout,
+        occupancies: [{ adults, children: [] }],
+        currency,
+        guestNationality: 'SG',
+        timeout: 15,
+      })
+      if (ratesResult?.status !== 'failed') {
+        const ratesList: any[] = ratesResult?.data?.data ?? ratesResult?.data ?? []
+        const hotelRates = ratesList.find((r: any) => (r.hotelId ?? r.id) === hotelId)
+        rates = hotelRates?.roomTypes ?? hotelRates?.rates ?? []
+      }
+    } catch {
+      // non-critical — hotel detail still shown without rates
+    }
+  }
+
   // Enrich with Muslim-friendly data
   let enrichment = null
   if (hotel?.location?.latitude && hotel?.location?.longitude) {
     try {
+      const boardCodes = rates.map((r: any) => r.boardCode ?? '')
       const enrichments = await enrichHotels([{
         hotelId,
         latitude: parseFloat(hotel.location.latitude),
         longitude: parseFloat(hotel.location.longitude),
         facilities: hotel.facilities ?? [],
-        boardCodes: [],
+        boardCodes,
       }])
       enrichment = enrichments[hotelId] ?? null
     } catch {
@@ -50,5 +80,5 @@ export async function GET(
     }
   }
 
-  return NextResponse.json({ hotel, reviews, muslimEnrichment: enrichment })
+  return NextResponse.json({ hotel: { ...hotel, rates }, reviews, muslimEnrichment: enrichment })
 }

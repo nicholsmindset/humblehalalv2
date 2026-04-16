@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   listingId: string
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ReviewForm({ listingId, listingName, isLoggedIn }: Props) {
+  const router = useRouter()
   const [rating, setRating] = useState(0)
   const [hover, setHover] = useState(0)
   const [title, setTitle] = useState('')
@@ -62,6 +64,7 @@ export function ReviewForm({ listingId, listingName, isLoggedIn }: Props) {
       setError(data.error ?? 'Something went wrong')
     } else {
       setSubmitted(true)
+      router.refresh()
     }
     setLoading(false)
   }

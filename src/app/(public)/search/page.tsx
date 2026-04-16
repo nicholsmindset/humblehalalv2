@@ -29,7 +29,6 @@ const VERTICALS = [
   { key: 'food',    label: 'Food' },
   { key: 'mosque',  label: 'Mosques' },
   { key: 'events',  label: 'Events' },
-  { key: 'classifieds', label: 'Classifieds' },
 ]
 
 function listingHref(vertical: string, slug: string): string {
@@ -67,7 +66,7 @@ export default async function SearchPage({ searchParams }: Props) {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
             <span className="material-symbols-outlined text-5xl text-charcoal/20 block mb-4">search</span>
             <h1 className="text-2xl font-extrabold text-charcoal mb-3">Search HumbleHalal</h1>
-            <p className="text-charcoal/50 mb-8">Find halal restaurants, mosques, events, classifieds and more.</p>
+            <p className="text-charcoal/50 mb-8">Find halal restaurants, mosques, events and more.</p>
             <form action="/search" method="get">
               <div className="flex gap-2 max-w-lg mx-auto">
                 <input
@@ -86,7 +85,7 @@ export default async function SearchPage({ searchParams }: Props) {
               </div>
             </form>
             <div className="mt-10 flex flex-wrap gap-3 justify-center">
-              {['Halal food', 'Mosques', 'Events', 'Catering', 'Classifieds'].map((label) => (
+              {['Halal food', 'Mosques', 'Events', 'Catering'].map((label) => (
                 <Link
                   key={label}
                   href={`/search?q=${encodeURIComponent(label)}`}
@@ -124,15 +123,6 @@ export default async function SearchPage({ searchParams }: Props) {
         .limit(5)
     : Promise.resolve({ data: [] })
 
-  const classifiedsPromise = shouldInclude('classifieds')
-    ? (supabase as any)
-        .from('classifieds')
-        .select('id, slug, title, price, category')
-        .eq('status', 'active')
-        .ilike('title', pattern)
-        .limit(5)
-    : Promise.resolve({ data: [] })
-
   const mosquesPromise = shouldInclude('mosque')
     ? (supabase as any)
         .from('mosques')
@@ -144,19 +134,16 @@ export default async function SearchPage({ searchParams }: Props) {
   const [
     { data: listings },
     { data: events },
-    { data: classifieds },
     { data: mosques },
   ] = await Promise.all([
     listingsPromise,
     eventsPromise,
-    classifiedsPromise,
     mosquesPromise,
   ])
 
   const totalResults =
     (listings?.length ?? 0) +
     (events?.length ?? 0) +
-    (classifieds?.length ?? 0) +
     (mosques?.length ?? 0)
 
   return (
@@ -228,7 +215,6 @@ export default async function SearchPage({ searchParams }: Props) {
                 <Link href="/halal-food" className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-colors">Halal Food</Link>
                 <Link href="/events" className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-colors">Events</Link>
                 <Link href="/mosque" className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-colors">Mosques</Link>
-                <Link href="/classifieds" className="bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-colors">Classifieds</Link>
               </div>
             </div>
           ) : (
@@ -290,35 +276,6 @@ export default async function SearchPage({ searchParams }: Props) {
                         <span className={`shrink-0 text-xs font-bold px-2.5 py-0.5 rounded-full ${ev.is_ticketed ? 'bg-accent/10 text-accent' : 'bg-primary/10 text-primary'}`}>
                           {ev.is_ticketed ? 'Ticketed' : 'Free'}
                         </span>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Classifieds */}
-              {classifieds && classifieds.length > 0 && (
-                <section>
-                  <h2 className="text-base font-semibold text-charcoal mb-3 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-lg">sell</span>
-                    Classifieds
-                  </h2>
-                  <div className="space-y-2">
-                    {(classifieds as {id:string;slug:string;title:string;price:number|null;category:string|null}[]).map((cl) => (
-                      <Link
-                        key={cl.id}
-                        href={`/classifieds/${cl.slug}`}
-                        className="bg-white rounded-xl border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all p-4 flex items-center justify-between gap-3"
-                      >
-                        <div>
-                          <p className="font-bold text-charcoal text-sm">{cl.title}</p>
-                          {cl.category && <p className="text-charcoal/50 text-xs capitalize">{cl.category}</p>}
-                        </div>
-                        {cl.price != null && (
-                          <span className="shrink-0 font-bold text-charcoal text-sm">
-                            S${cl.price.toLocaleString()}
-                          </span>
-                        )}
                       </Link>
                     ))}
                   </div>

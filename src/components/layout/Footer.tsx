@@ -17,9 +17,6 @@ const columns = [
   {
     heading: 'Community',
     links: [
-      { label: 'Forum', href: '/community' },
-      { label: 'Reviews', href: '/community' },
-      { label: 'Classifieds', href: '/classifieds' },
       { label: 'Travel Guides', href: '/travel' },
       { label: 'Blog', href: '/blog' },
       { label: 'Newsletter', href: 'https://humblehalal.beehiiv.com', external: true },

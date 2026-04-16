@@ -5,9 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 
 const TABLE_MAP: Record<string, string> = {
   review: 'reviews',
-  classified: 'classifieds',
-  forum_post: 'forum_posts',
-  forum_reply: 'forum_replies',
 }
 
 export async function PATCH(request: NextRequest) {

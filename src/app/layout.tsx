@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | HumbleHalal",
   },
   description:
-    "Singapore's all-in-one halal ecosystem: restaurants, Muslim businesses, events, classifieds, mosque finder, travel guides, and community forum.",
+    "Singapore's all-in-one halal ecosystem: restaurants, Muslim businesses, events, mosque finder, travel guides, and halal product reviews.",
   metadataBase: new URL("https://humblehalal.sg"),
   openGraph: {
     type: "website",

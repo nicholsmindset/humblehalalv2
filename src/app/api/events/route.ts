@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
     description,
     category,
     organiser,
-    event_format,
+    is_online,
+    is_hybrid,
     starts_at,
     ends_at,
     venue,
@@ -78,9 +79,9 @@ export async function POST(request: NextRequest) {
   const baseSlug = slugify(`${cleanTitle}-${new Date(starts_at).getFullYear()}`)
   const slug = await uniqueSlug(db, baseSlug)
 
-  const isOnline = event_format === 'online' || event_format === 'hybrid'
-  const isInPerson = event_format === 'in_person' || event_format === 'hybrid'
-  const isHybrid = event_format === 'hybrid'
+  const isOnline = !!is_online
+  const isHybrid = !!is_hybrid
+  const isInPerson = !isOnline || isHybrid
 
   const { data: event, error: eventError } = await db
     .from('events')
@@ -95,13 +96,13 @@ export async function POST(request: NextRequest) {
       is_hybrid: isHybrid,
       online_platform: isOnline ? online_platform : null,
       online_link: isOnline ? cleanOnlineLink : null,
-      starts_at,
-      ends_at: ends_at || null,
+      start_datetime: starts_at,
+      end_datetime: ends_at || null,
       is_ticketed: !!is_ticketed,
       refund_policy: refund_policy || 'no_refund',
       refund_policy_text: refund_policy_text || null,
       status: 'pending',
-      created_by: user.id,
+      organiser_id: user.id,
     })
     .select('id, slug')
     .single()
@@ -117,8 +118,7 @@ export async function POST(request: NextRequest) {
       name: t.name,
       description: t.description || null,
       price: parseFloat(t.price) || 0,
-      total_quantity: parseInt(t.quantity) || null,
-      max_per_order: parseInt(t.max_per_order) || 10,
+      quantity: parseInt(t.quantity) || 0,
       sale_start: t.sale_start || null,
       sale_end: t.sale_end || null,
       sort_order: i,

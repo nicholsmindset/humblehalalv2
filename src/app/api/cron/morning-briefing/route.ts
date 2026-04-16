@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
       { count: pendingModerations },
       { count: newBookings },
       { count: newEvents },
-      { count: newClassifieds },
     ] = await Promise.all([
       db.from('listings').select('*', { count: 'exact', head: true })
         .gte('created_at', dayStart.toISOString())
@@ -51,9 +50,6 @@ export async function GET(request: NextRequest) {
       db.from('events').select('*', { count: 'exact', head: true })
         .gte('created_at', dayStart.toISOString())
         .lte('created_at', dayEnd.toISOString()),
-      db.from('classifieds').select('*', { count: 'exact', head: true })
-        .gte('created_at', dayStart.toISOString())
-        .lte('created_at', dayEnd.toISOString()),
     ])
 
     const stats = {
@@ -63,7 +59,6 @@ export async function GET(request: NextRequest) {
       pending_moderations: pendingModerations ?? 0,
       new_bookings: newBookings ?? 0,
       new_events: newEvents ?? 0,
-      new_classifieds: newClassifieds ?? 0,
     }
 
     // Insert into ai_activity_log for the /admin morning briefing page to read

@@ -18,24 +18,21 @@ interface SearchResult {
 }
 
 const VERTICAL_ICONS: Record<string, string> = {
-  food:       'restaurant',
-  mosque:     'mosque',
-  events:     'event',
-  classifieds: 'sell',
+  food:   'restaurant',
+  mosque: 'mosque',
+  events: 'event',
 }
 
 const VERTICAL_LABELS: Record<string, string> = {
-  food:        'Restaurant',
-  mosque:      'Mosque',
-  events:      'Event',
-  classifieds: 'Classified',
+  food:   'Restaurant',
+  mosque: 'Mosque',
+  events: 'Event',
 }
 
 function itemHref(vertical: string, item: SearchItem): string {
   if (vertical === 'food') return `/restaurant/${item.slug}`
   if (vertical === 'mosque') return `/mosque/${item.slug}`
   if (vertical === 'events') return `/events/${item.slug}`
-  if (vertical === 'classifieds') return `/classifieds/${item.slug}`
   return '#'
 }
 

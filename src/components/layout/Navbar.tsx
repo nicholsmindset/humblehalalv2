@@ -10,7 +10,6 @@ const navLinks = [
   { label: 'Restaurants', href: '/halal-food' },
   { label: 'Businesses', href: '/business' },
   { label: 'Events', href: '/events' },
-  { label: 'Classifieds', href: '/classifieds' },
   { label: 'Mosques', href: '/mosque' },
   { label: 'Blog', href: '/blog' },
 ]

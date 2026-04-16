@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ContactForm } from '@/components/forms/ContactForm'
 
 export const metadata: Metadata = {
   title: 'Contact Us — HumbleHalal Singapore | HumbleHalal',
@@ -43,6 +44,12 @@ export default function ContactPage() {
             <span className="material-symbols-outlined text-sm">send</span>
             info@humblehalal.com
           </a>
+        </div>
+
+        {/* Contact form */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-8">
+          <h2 className="text-xl font-extrabold text-[#1C1917] mb-6 font-sans">Send Us a Message</h2>
+          <ContactForm />
         </div>
 
         {/* Topic cards */}

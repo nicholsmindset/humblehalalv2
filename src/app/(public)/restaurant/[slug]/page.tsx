@@ -6,6 +6,7 @@ import { HalalStatus, HALAL_STATUS_LABELS, ISR_REVALIDATE } from '@/config'
 import { ListingActions } from '@/components/listings/ListingActions'
 import { ReviewForm } from '@/components/reviews/ReviewForm'
 import { ReviewsList } from '@/components/reviews/ReviewsList'
+import { ListingMap } from '@/components/maps/ListingMap'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
@@ -48,7 +49,7 @@ export default async function RestaurantPage({ params }: Props) {
       id, name, slug, area, address, phone, website, email,
       description, halal_status, muis_cert_no, muis_expiry,
       photos, avg_rating, review_count, price_range,
-      categories, operating_hours, social_links,
+      categories, operating_hours, social_links, location,
       listings_food (
         cuisine_types, menu_url, price_range, delivery_platforms, operating_hours
       )
@@ -62,6 +63,11 @@ export default async function RestaurantPage({ params }: Props) {
   const food = Array.isArray(listing.listings_food)
     ? listing.listings_food[0]
     : listing.listings_food
+
+  // Extract lat/lng from PostGIS GeoJSON: { type: 'Point', coordinates: [lng, lat] }
+  const coords = listing.location?.coordinates as [number, number] | undefined
+  const mapLng = coords?.[0]
+  const mapLat = coords?.[1]
 
   const PRICE_LABELS: Record<number, string> = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' }
   const halalLabel = HALAL_STATUS_LABELS[listing.halal_status as HalalStatus]
@@ -196,6 +202,20 @@ export default async function RestaurantPage({ params }: Props) {
           />
         </aside>
       </div>
+
+      {/* ── Map ─────────────────────────────────────────────────── */}
+      {mapLat != null && mapLng != null && (
+        <section className="mt-8">
+          <h2 className="text-lg font-bold text-charcoal mb-3">Location</h2>
+          <ListingMap
+            lat={mapLat}
+            lng={mapLng}
+            name={listing.name}
+            address={listing.address ?? undefined}
+            className="h-64"
+          />
+        </section>
+      )}
 
       {/* ── Reviews ─────────────────────────────────────────────── */}
       <section className="mt-12 pt-10 border-t border-gray-100">

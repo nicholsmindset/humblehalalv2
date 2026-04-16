@@ -9,7 +9,6 @@ const categories = [
   { label: 'Muslim Businesses', icon: 'store', href: '/business', count: '800+', color: 'bg-amber-50 text-accent' },
   { label: 'Catering', icon: 'lunch_dining', href: '/catering', count: '150+', color: 'bg-emerald-50 text-primary' },
   { label: 'Events', icon: 'event', href: '/events', count: '50+', color: 'bg-amber-50 text-accent' },
-  { label: 'Classifieds', icon: 'sell', href: '/classifieds', count: '300+', color: 'bg-emerald-50 text-primary' },
   { label: 'Mosques', icon: 'mosque', href: '/mosque', count: '70+', color: 'bg-amber-50 text-accent' },
   { label: 'Prayer Rooms', icon: 'location_on', href: '/prayer-rooms', count: '200+', color: 'bg-emerald-50 text-primary' },
   { label: 'Products', icon: 'inventory_2', href: '/products', count: '500+', color: 'bg-amber-50 text-accent' },
@@ -42,7 +41,7 @@ const cuisines = [
 export const metadata = {
   title: "HumbleHalal — Singapore's Halal Ecosystem",
   description:
-    "Singapore's trusted halal directory. Find MUIS-certified restaurants, Muslim businesses, mosques, events, classifieds and more. 2,000+ halal listings.",
+    "Singapore's trusted halal directory. Find MUIS-certified restaurants, Muslim businesses, mosques, events and more. 2,000+ halal listings.",
 }
 
 export const revalidate = 1800
@@ -96,8 +95,8 @@ export default async function HomePage() {
             <span className="italic font-display text-accent">Singapore</span>
           </h1>
           <p className="text-white/70 text-lg max-w-xl mx-auto mb-10">
-            2,000+ MUIS-certified restaurants, Muslim businesses, mosques, events,
-            and community classifieds — all in one place.
+            2,000+ MUIS-certified restaurants, Muslim businesses, mosques, and events
+            — all in one place.
           </p>
 
           {/* Search bar — text-base prevents iOS zoom on focus */}

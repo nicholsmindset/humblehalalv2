@@ -78,19 +78,6 @@ export async function GET(request: NextRequest) {
     ))
   }
 
-  // ── Classifieds ─────────────────────────────────────────────
-  if (shouldInclude('classifieds')) {
-    queryPromises.push(runQuery('classifieds',
-      supabase
-        .from('classifieds')
-        .select('id, slug, title, area, price, category')
-        .eq('status', 'active')
-        .or(`title.ilike.${pattern},description.ilike.${pattern}`)
-        .order('created_at', { ascending: false })
-        .limit(MAX_RESULTS_PER_VERTICAL) as any
-    ))
-  }
-
   const results = await Promise.all(queryPromises)
 
   // Flatten into a unified response

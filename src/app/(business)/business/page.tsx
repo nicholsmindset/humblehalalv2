@@ -156,7 +156,7 @@ export default async function BusinessPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/dashboard/listings/${l.id}`}
+                  href="/business/dashboard"
                   className="text-sm text-primary font-medium hover:underline shrink-0"
                 >
                   Manage →
