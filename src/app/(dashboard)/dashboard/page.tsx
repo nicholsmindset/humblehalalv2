@@ -47,7 +47,7 @@ export default async function DashboardPage() {
             icon="store"
             label="My Listings"
             description="Claim and manage your business"
-            href="/dashboard/listings"
+            href="/business/dashboard"
           />
           <DashCard
             icon="person"

@@ -7,8 +7,14 @@ import type { ListingCardProps } from '@/components/listings/ListingCard'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
+const SORT_OPTIONS = [
+  { key: 'rating', label: 'Top Rated', icon: 'star' },
+  { key: 'newest', label: 'Newest', icon: 'schedule' },
+  { key: 'name', label: 'A–Z', icon: 'sort_by_alpha' },
+] as const
+
 interface Props {
-  searchParams: Promise<{ area?: string; cuisine?: string; q?: string; page?: string }>
+  searchParams: Promise<{ area?: string; cuisine?: string; q?: string; page?: string; sort?: string }>
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -43,7 +49,7 @@ const AREA_LABELS: Record<string, string> = {
 }
 
 export default async function HalalFoodPage({ searchParams }: Props) {
-  const { area, cuisine, q, page: pageStr } = await searchParams
+  const { area, cuisine, q, page: pageStr, sort = 'rating' } = await searchParams
   const page = Math.max(1, parseInt(pageStr ?? '1', 10))
   const offset = (page - 1) * PAGE_SIZE
 
@@ -54,17 +60,26 @@ export default async function HalalFoodPage({ searchParams }: Props) {
     .from('listings')
     .select(`
       id, slug, name, vertical, area, address, halal_status,
-      avg_rating, review_count, photos, featured,
+      avg_rating, review_count, photos, featured, created_at,
+      operating_hours, delivery_platforms,
       listings_food ( cuisine_types, price_range )
     `, { count: 'exact' })
     .eq('vertical', 'food')
     .eq('status', 'active')
-    .order('featured', { ascending: false })
-    .order('avg_rating', { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1)
 
   if (area) query = query.eq('area', area)
   if (q) query = query.ilike('name', `%${q}%`)
+  if (cuisine) query = (query as any).eq('listings_food.cuisine_types', cuisine)
+
+  // Sort
+  if (sort === 'newest') {
+    query = query.order('created_at', { ascending: false })
+  } else if (sort === 'name') {
+    query = query.order('name', { ascending: true })
+  } else {
+    query = query.order('featured', { ascending: false }).order('avg_rating', { ascending: false })
+  }
 
   const { data: rows, count } = await query
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
@@ -86,6 +101,8 @@ export default async function HalalFoodPage({ searchParams }: Props) {
       cuisine_types: food?.cuisine_types as string[] | undefined,
       price_range: food?.price_range ?? null,
       is_featured: r.featured ?? false,
+      operating_hours: r.operating_hours ?? null,
+      delivery_platforms: r.delivery_platforms ?? null,
     }
   })
 
@@ -148,6 +165,25 @@ export default async function HalalFoodPage({ searchParams }: Props) {
             }`}
           >
             {label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Sort options */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-xs text-charcoal/40 font-medium">Sort:</span>
+        {SORT_OPTIONS.map((opt) => (
+          <Link
+            key={opt.key}
+            href={`/halal-food?${new URLSearchParams({ ...(area ? { area } : {}), ...(cuisine ? { cuisine } : {}), sort: opt.key }).toString()}`}
+            className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+              sort === opt.key
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-charcoal/70 border-gray-200 hover:border-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[11px]">{opt.icon}</span>
+            {opt.label}
           </Link>
         ))}
       </div>

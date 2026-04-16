@@ -58,6 +58,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
           address: form.address,
           phone: form.phone,
           website: form.website,
+          operating_hours: form.opening_hours,
         }),
       })
 

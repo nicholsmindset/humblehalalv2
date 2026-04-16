@@ -11,7 +11,6 @@ export enum Vertical {
   Services = "services",
   Products = "products",
   Events = "events",
-  Classifieds = "classifieds",
   Mosque = "mosque",
   PrayerRoom = "prayer_room",
 }

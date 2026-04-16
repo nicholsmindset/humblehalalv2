@@ -8,24 +8,17 @@ export const dynamic = 'force-dynamic'
 export default async function ModerationPage() {
   const supabase = await createClient()
 
-  const [{ data: pendingReviews }, { data: pendingClassifieds }] = (await Promise.all([
+  const [{ data: pendingReviews }] = (await Promise.all([
     supabase
       .from('reviews')
       .select('id, rating, title, body, created_at, listing_id, listings(name, slug)')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(50),
-    supabase
-      .from('classifieds')
-      .select('id, title, description, category, price, area, created_at')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(30),
   ])) as any[]
 
   const reviews = (pendingReviews ?? []) as any[]
-  const classifieds = (pendingClassifieds ?? []) as any[]
-  const total = reviews.length + classifieds.length
+  const total = reviews.length
 
   return (
     <div className="space-y-8">
@@ -89,51 +82,6 @@ export default async function ModerationPage() {
         )}
       </section>
 
-      {/* ── Classifieds ──────────────────────────────────────── */}
-      <section>
-        <h2 className="text-white/60 text-xs font-bold uppercase tracking-widest mb-4">
-          Classifieds ({classifieds.length})
-        </h2>
-
-        {classifieds.length === 0 ? (
-          <EmptyState icon="check_circle" message="No pending classifieds" />
-        ) : (
-          <div className="space-y-3">
-            {classifieds.map((c: any) => (
-              <div key={c.id} className="bg-white/5 border border-white/10 rounded-xl p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-3 mb-1">
-                      <span className="text-white font-medium text-sm">{c.title}</span>
-                      {c.category && (
-                        <span className="text-white/40 text-xs capitalize">{c.category}</span>
-                      )}
-                      {c.price != null && (
-                        <span className="text-accent text-xs font-bold">
-                          S${Number(c.price).toFixed(2)}
-                        </span>
-                      )}
-                      <span className="text-white/40 text-xs ml-auto">
-                        {new Date(c.created_at).toLocaleDateString('en-SG')}
-                      </span>
-                    </div>
-                    {c.description && (
-                      <p className="text-white/60 text-sm line-clamp-2 mb-1">{c.description}</p>
-                    )}
-                    {c.area && (
-                      <p className="text-white/40 text-xs capitalize">
-                        <span className="material-symbols-outlined text-xs align-text-bottom mr-1">location_on</span>
-                        {c.area.replace(/-/g, ' ')}
-                      </p>
-                    )}
-                  </div>
-                  <ModerationActions id={c.id} contentType="classified" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   )
 }

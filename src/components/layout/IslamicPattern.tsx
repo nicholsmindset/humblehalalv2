@@ -5,7 +5,7 @@ interface IslamicPatternProps {
   className?: string
 }
 
-export function IslamicPattern({ opacity = 0.1, className }: IslamicPatternProps) {
+export function IslamicPattern({ opacity = 0.12, className }: IslamicPatternProps) {
   return (
     <div
       className={cn('islamic-pattern pointer-events-none absolute inset-0', className)}

@@ -239,7 +239,7 @@ export function generateWebSiteSchema(): object {
     '@type': 'WebSite',
     name: SITE_NAME,
     url: SITE_URL,
-    description: "Singapore's trusted halal directory. Find MUIS-certified restaurants, Muslim businesses, mosques, events, classifieds and more.",
+    description: "Singapore's trusted halal directory. Find MUIS-certified restaurants, Muslim businesses, mosques, events and more.",
     potentialAction: {
       '@type': 'SearchAction',
       target: {

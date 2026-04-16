@@ -48,7 +48,7 @@ ${eventLines || '• No events this week — check /events for the latest.'}
 
 - Browse halal restaurants: https://humblehalal.sg/halal-food?utm_source=newsletter&utm_medium=email&utm_campaign=weekly
 - Find mosques near you: https://humblehalal.sg/mosque?utm_source=newsletter&utm_medium=email&utm_campaign=weekly
-- Community classifieds: https://humblehalal.sg/classifieds?utm_source=newsletter&utm_medium=email&utm_campaign=weekly
+- Upcoming events: https://humblehalal.sg/events?utm_source=newsletter&utm_medium=email&utm_campaign=weekly
 
 Jazakallah khair for being part of our community. 🌿
 

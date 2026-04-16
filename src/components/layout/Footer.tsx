@@ -4,36 +4,33 @@ import { CookiePreferencesButton } from './CookieConsent'
 
 const columns = [
   {
-    heading: 'Explore',
+    heading: 'Discover',
     links: [
       { label: 'Halal Restaurants', href: '/halal-food' },
       { label: 'Muslim Businesses', href: '/business' },
       { label: 'Halal Catering', href: '/catering' },
+      { label: 'Halal Products', href: '/products' },
+      { label: 'Muslim Services', href: '/services' },
       { label: 'Events', href: '/events' },
-      { label: 'Mosques', href: '/mosque' },
-      { label: 'Prayer Rooms', href: '/prayer-rooms' },
     ],
   },
   {
-    heading: 'Community',
+    heading: 'Prayer',
     links: [
-      { label: 'Forum', href: '/community' },
-      { label: 'Reviews', href: '/community' },
-      { label: 'Classifieds', href: '/classifieds' },
+      { label: 'Mosques', href: '/mosque' },
+      { label: 'Prayer Rooms', href: '/prayer-rooms' },
+      { label: 'Prayer Times', href: '/prayer-times/singapore' },
+      { label: 'Muslim-Friendly Malls', href: '/malls' },
+      { label: 'Mosque Map', href: '/mosque/map' },
+    ],
+  },
+  {
+    heading: 'More',
+    links: [
+      { label: 'Halal Travel', href: '/travel' },
       { label: 'Travel Guides', href: '/travel' },
       { label: 'Blog', href: '/blog' },
       { label: 'Newsletter', href: 'https://humblehalal.beehiiv.com', external: true },
-    ],
-  },
-  {
-    heading: 'Business',
-    links: [
-      { label: 'List Your Business', href: '/business' },
-      { label: 'Premium Listings', href: '/business' },
-      { label: 'Advertise', href: '/business' },
-      { label: 'Business Dashboard', href: '/dashboard' },
-      { label: 'Halal Products', href: '/products' },
-      { label: 'Services', href: '/services' },
     ],
   },
   {
@@ -41,9 +38,9 @@ const columns = [
     links: [
       { label: 'About Us', href: '/about' },
       { label: 'Contact', href: '/contact' },
+      { label: 'For Businesses', href: '/business' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Service', href: '/terms' },
-      { label: 'Sitemap', href: '/sitemap.xml' },
     ],
   },
 ]
@@ -113,10 +110,14 @@ export function Footer() {
             MUIS (Majlis Ugama Islam Singapura) for the latest certification status.
             HumbleHalal is not affiliated with MUIS.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <p className="text-white/30 text-xs">
               © {new Date().getFullYear()} HumbleHalal.sg · All rights reserved.
             </p>
+            <span className="inline-flex items-center gap-1 bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full">
+              <span className="material-symbols-outlined text-xs">verified</span>
+              MUIS Data · Updated weekly
+            </span>
             <CookiePreferencesButton />
           </div>
         </div>

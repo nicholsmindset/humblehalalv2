@@ -20,8 +20,9 @@ function run(script, label) {
   }
 }
 
-run('mosques.js',  'Mosques')
-run('muis.js',    'MUIS Listings')
-run('places.js',  'Google Places Enrichment')
+run('mosques.js',       'Mosques')
+run('prayer_rooms.js',  'Prayer Rooms')
+run('muis.js',          'MUIS Listings')
+run('places.js',        'Google Places Enrichment')
 
 console.log('\n[seed] All seeds complete.')

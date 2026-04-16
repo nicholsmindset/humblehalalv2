@@ -2,11 +2,17 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE } from '@/config'
+import { EventCard } from '@/components/events/EventCard'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
 
+const SORT_OPTIONS = [
+  { key: 'soonest', label: 'Soonest', icon: 'event' },
+  { key: 'newest', label: 'Newly Added', icon: 'schedule' },
+] as const
+
 interface Props {
-  searchParams: Promise<{ type?: string; area?: string; page?: string }>
+  searchParams: Promise<{ type?: string; area?: string; page?: string; sort?: string }>
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -37,7 +43,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 }
 
 export default async function EventsPage({ searchParams }: Props) {
-  const { type, area, page: pageStr } = await searchParams
+  const { type, area, page: pageStr, sort = 'soonest' } = await searchParams
   const page = Math.max(1, parseInt(pageStr ?? '1', 10))
   const offset = (page - 1) * PAGE_SIZE
 
@@ -48,11 +54,16 @@ export default async function EventsPage({ searchParams }: Props) {
     .select('id, slug, title, area, venue, starts_at, ends_at, price_type, images, organiser', { count: 'exact' })
     .eq('status', 'active')
     .gte('ends_at', new Date().toISOString())
-    .order('starts_at', { ascending: true })
     .range(offset, offset + PAGE_SIZE - 1)
 
   if (area) query = query.eq('area', area)
   if (type) query = query.eq('category', type)
+
+  if (sort === 'newest') {
+    query = query.order('created_at', { ascending: false })
+  } else {
+    query = query.order('starts_at', { ascending: true })
+  }
 
   const { data: events, count } = (await query) as any
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
@@ -85,6 +96,25 @@ export default async function EventsPage({ searchParams }: Props) {
         ))}
       </div>
 
+      {/* Sort options */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-xs text-charcoal/40 font-medium">Sort:</span>
+        {SORT_OPTIONS.map((opt) => (
+          <Link
+            key={opt.key}
+            href={`/events?${new URLSearchParams({ ...(area ? { area } : {}), ...(type ? { type } : {}), sort: opt.key }).toString()}`}
+            className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+              sort === opt.key
+                ? 'bg-primary text-white border-primary'
+                : 'bg-white text-charcoal/70 border-gray-200 hover:border-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[11px]">{opt.icon}</span>
+            {opt.label}
+          </Link>
+        ))}
+      </div>
+
       {/* Grid */}
       {!events || events.length === 0 ? (
         <div className="text-center py-20">
@@ -94,57 +124,21 @@ export default async function EventsPage({ searchParams }: Props) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-            {events.map((evt: any) => {
-              const start = new Date(evt.starts_at)
-              const dateStr = start.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })
-              const timeStr = start.toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' })
-
-              return (
-                <Link
-                  key={evt.id}
-                  href={`/events/${evt.slug}`}
-                  className="group bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden flex flex-col"
-                >
-                  {/* Image or date block */}
-                  <div className="relative h-40 overflow-hidden">
-                    {evt.images?.[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={evt.images[0]} alt={evt.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="w-full h-full bg-amber-50 flex flex-col items-center justify-center">
-                        <span className="text-accent text-3xl font-extrabold">{start.getDate()}</span>
-                        <span className="text-accent/70 text-sm uppercase tracking-wide">
-                          {start.toLocaleDateString('en-SG', { month: 'short' })}
-                        </span>
-                      </div>
-                    )}
-                    {evt.price_type === 'free' && (
-                      <span className="absolute top-2 right-2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        FREE
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="p-4 flex flex-col gap-2 flex-1">
-                    <h2 className="font-bold text-charcoal text-sm leading-snug line-clamp-2">{evt.title}</h2>
-                    <div className="flex items-center gap-1 text-xs text-charcoal/50">
-                      <span className="material-symbols-outlined text-sm">schedule</span>
-                      <span>{dateStr} · {timeStr}</span>
-                    </div>
-                    {evt.venue && (
-                      <div className="flex items-center gap-1 text-xs text-charcoal/50">
-                        <span className="material-symbols-outlined text-sm">location_on</span>
-                        <span className="line-clamp-1">{evt.venue}</span>
-                      </div>
-                    )}
-                    {evt.organiser && (
-                      <p className="text-charcoal/40 text-xs mt-auto">by {evt.organiser}</p>
-                    )}
-                  </div>
-                </Link>
-              )
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+            {events.map((evt: any) => (
+              <EventCard
+                key={evt.id}
+                slug={evt.slug}
+                title={evt.title}
+                area={evt.area}
+                venue_name={evt.venue}
+                starts_at={evt.starts_at}
+                ends_at={evt.ends_at}
+                ticket_price={evt.price_type === 'free' ? 0 : evt.ticket_price}
+                is_free={evt.price_type === 'free'}
+                image_url={evt.images?.[0] ?? null}
+              />
+            ))}
           </div>
 
           {totalPages > 1 && (

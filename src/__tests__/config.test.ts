@@ -25,7 +25,7 @@ describe('HalalStatus enum', () => {
 
 describe('Vertical enum', () => {
   it('contains all required verticals', () => {
-    const required = ['food', 'catering', 'services', 'products', 'events', 'classifieds', 'mosque', 'prayer_room']
+    const required = ['food', 'catering', 'services', 'products', 'events', 'mosque', 'prayer_room']
     for (const v of required) {
       expect(Object.values(Vertical)).toContain(v)
     }

@@ -47,10 +47,20 @@ export default function HotelDetailPage() {
   const [loading, setLoading] = useState(true)
   const [activeImage, setActiveImage] = useState(0)
 
+  const backParams = searchParams.toString()
+  const checkin = searchParams.get('checkin') ?? ''
+  const checkout = searchParams.get('checkout') ?? ''
+  const guests = searchParams.get('guests') ?? '2'
+
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/travel/hotel/${hotelId}`)
+        const rateParams = new URLSearchParams()
+        if (checkin) rateParams.set('checkin', checkin)
+        if (checkout) rateParams.set('checkout', checkout)
+        if (guests) rateParams.set('guests', guests)
+        const rateQuery = rateParams.toString() ? `?${rateParams.toString()}` : ''
+        const res = await fetch(`/api/travel/hotel/${hotelId}${rateQuery}`)
         if (!res.ok) throw new Error('Not found')
         const data = await res.json()
         setHotel(data.hotel)
@@ -63,12 +73,7 @@ export default function HotelDetailPage() {
       }
     }
     load()
-  }, [hotelId])
-
-  const backParams = searchParams.toString()
-  const checkin = searchParams.get('checkin') ?? ''
-  const checkout = searchParams.get('checkout') ?? ''
-  const guests = searchParams.get('guests') ?? '2'
+  }, [hotelId, checkin, checkout, guests])
 
   if (loading) {
     return (

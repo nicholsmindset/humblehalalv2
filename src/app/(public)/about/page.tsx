@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'About HumbleHalal — Singapore\'s Halal Ecosystem | HumbleHalal',
-  description: 'HumbleHalal is Singapore\'s all-in-one halal platform — 2,400+ MUIS-certified restaurants, Muslim businesses, mosques, events, and community classifieds.',
+  description: 'HumbleHalal is Singapore\'s all-in-one halal platform — 2,400+ MUIS-certified restaurants, Muslim businesses, mosques, events, travel guides, and halal products.',
 }
 
 export default function AboutPage() {
@@ -37,7 +37,7 @@ export default function AboutPage() {
             <p className="text-[#1C1917]/70 leading-relaxed mb-4">
               HumbleHalal is Singapore&apos;s most comprehensive halal directory and community
               platform. We bring together 10,000+ programmatic pages covering restaurants,
-              Muslim businesses, mosques, prayer rooms, events, classifieds, travel guides,
+              Muslim businesses, mosques, prayer rooms, events, travel guides,
               halal products, and service providers.
             </p>
             <p className="text-[#1C1917]/70 leading-relaxed">
