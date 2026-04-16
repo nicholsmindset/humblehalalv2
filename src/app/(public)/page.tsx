@@ -1,16 +1,18 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { IslamicPattern } from '@/components/layout/IslamicPattern'
+import { HeroSearch } from '@/components/search/HeroSearch'
 import { createClient } from '@/lib/supabase/server'
 
 // ── Category grid data ────────────────────────────────────────
 const categories = [
   { label: 'Restaurants', icon: 'restaurant', href: '/halal-food', count: '2,400+', color: 'bg-emerald-50 text-primary' },
-  { label: 'Muslim Businesses', icon: 'store', href: '/business', count: '800+', color: 'bg-amber-50 text-accent' },
-  { label: 'Catering', icon: 'lunch_dining', href: '/catering', count: '150+', color: 'bg-emerald-50 text-primary' },
-  { label: 'Events', icon: 'event', href: '/events', count: '50+', color: 'bg-amber-50 text-accent' },
   { label: 'Mosques', icon: 'mosque', href: '/mosque', count: '70+', color: 'bg-amber-50 text-accent' },
-  { label: 'Prayer Rooms', icon: 'location_on', href: '/prayer-rooms', count: '200+', color: 'bg-emerald-50 text-primary' },
+  { label: 'Prayer Rooms', icon: 'room_preferences', href: '/prayer-rooms', count: '200+', color: 'bg-emerald-50 text-primary' },
+  { label: 'Muslim Businesses', icon: 'store', href: '/business', count: '800+', color: 'bg-amber-50 text-accent' },
+  { label: 'Events', icon: 'event', href: '/events', count: '50+', color: 'bg-emerald-50 text-primary' },
+  { label: 'Halal Travel', icon: 'flight', href: '/travel', count: '18 cities', color: 'bg-amber-50 text-accent' },
+  { label: 'Muslim-Friendly Malls', icon: 'shopping_bag', href: '/malls', count: '20+', color: 'bg-emerald-50 text-primary' },
   { label: 'Products', icon: 'inventory_2', href: '/products', count: '500+', color: 'bg-amber-50 text-accent' },
 ] as const
 
@@ -87,50 +89,24 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-background-dark/60 via-background-dark/40 to-background-dark/80 z-[1]" />
         <IslamicPattern opacity={0.06} />
         <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <p className="text-accent text-sm font-bold uppercase tracking-widest mb-4">
-            Singapore&apos;s Halal Ecosystem
-          </p>
+          {/* Verified badge */}
+          <div className="inline-flex items-center gap-1.5 bg-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full border border-primary/30 mb-5">
+            <span className="material-symbols-outlined text-sm">verified</span>
+            Singapore&apos;s #1 Halal Ecosystem
+          </div>
+
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 font-sans leading-tight">
-            Find Halal in{' '}
-            <span className="italic font-display text-accent">Singapore</span>
+            Singapore&apos;s{' '}
+            <span className="italic font-display text-accent">Halal</span>{' '}
+            Ecosystem
           </h1>
           <p className="text-white/70 text-lg max-w-xl mx-auto mb-10">
-            2,000+ MUIS-certified restaurants, Muslim businesses, mosques, and events
-            — all in one place.
+            {(listingCount ?? 2400).toLocaleString()}+ MUIS-certified restaurants, Muslim businesses,
+            mosques, events — all in one place.
           </p>
 
-          {/* Search bar — text-base prevents iOS zoom on focus */}
-          <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-            <div className="relative flex-1">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40">
-                search
-              </span>
-              <input
-                type="search"
-                placeholder="Search halal restaurants, businesses…"
-                className="w-full pl-10 pr-4 h-12 rounded-xl bg-white text-charcoal placeholder-charcoal/40 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <Link
-              href="/halal-food"
-              className="bg-accent text-charcoal font-bold px-6 h-12 rounded-xl hover:bg-accent/90 transition-colors shrink-0 text-sm flex items-center justify-center"
-            >
-              Search
-            </Link>
-          </div>
-
-          {/* Quick links */}
-          <div className="flex flex-wrap gap-2 justify-center mt-6">
-            {cuisines.slice(0, 5).map((c) => (
-              <Link
-                key={c.href}
-                href={c.href}
-                className="bg-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full hover:bg-white/20 transition-colors min-h-[36px] flex items-center"
-              >
-                {c.label}
-              </Link>
-            ))}
-          </div>
+          {/* Frosted glass search bar (client component) */}
+          <HeroSearch />
         </div>
       </section>
 
@@ -351,12 +327,14 @@ export default async function HomePage() {
               placeholder="your@email.com"
               className="flex-1 px-4 h-12 rounded-xl bg-white/10 text-white placeholder-white/40 border border-white/20 focus:outline-none focus:border-accent text-base"
             />
-            <Link
-              href="/newsletter"
+            <a
+              href="https://humblehalal.beehiiv.com?utm_source=humblehalal&utm_medium=website&utm_campaign=homepage"
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-accent text-charcoal font-bold px-6 h-12 rounded-xl hover:bg-accent/90 transition-colors shrink-0 text-sm flex items-center justify-center"
             >
               Subscribe
-            </Link>
+            </a>
           </div>
         </div>
       </section>

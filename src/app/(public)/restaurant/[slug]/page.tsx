@@ -2,13 +2,47 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { MuisBadge } from '@/components/ui/MuisBadge'
-import { HalalStatus, HALAL_STATUS_LABELS, ISR_REVALIDATE } from '@/config'
+import { HalalStatus, HALAL_STATUS_LABELS, ISR_REVALIDATE, SITE_URL } from '@/config'
 import { ListingActions } from '@/components/listings/ListingActions'
 import { ReviewForm } from '@/components/reviews/ReviewForm'
 import { ReviewsList } from '@/components/reviews/ReviewsList'
 import { ListingMap } from '@/components/maps/ListingMap'
+import { ShareButtons } from '@/components/ui/ShareButtons'
 
 export const revalidate = ISR_REVALIDATE.HIGH_TRAFFIC
+
+const DAYS_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+const DELIVERY_URLS: Record<string, string> = {
+  grabfood: 'https://food.grab.com/sg/en/',
+  'grab food': 'https://food.grab.com/sg/en/',
+  grab: 'https://food.grab.com/sg/en/',
+  foodpanda: 'https://www.foodpanda.sg/',
+  deliveroo: 'https://deliveroo.com.sg/',
+}
+
+function OperatingHoursTable({ hours }: { hours: Record<string, string> }) {
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+  return (
+    <div className="space-y-1.5">
+      {DAYS_ORDER.map((day) => {
+        const val = hours[day]
+        const isToday = day === today
+        return (
+          <div
+            key={day}
+            className={`flex justify-between text-sm rounded px-2 py-1 ${isToday ? 'bg-primary/5 font-semibold' : ''}`}
+          >
+            <span className={`capitalize ${isToday ? 'text-primary' : 'text-charcoal/70'}`}>{day}</span>
+            <span className={isToday ? 'text-primary' : 'text-charcoal/50'}>
+              {val ?? 'Not listed'}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -149,19 +183,35 @@ export default async function RestaurantPage({ params }: Props) {
             </section>
           )}
 
+          {/* Operating hours */}
+          {(food?.operating_hours || listing.operating_hours) && (
+            <section>
+              <h2 className="text-lg font-bold text-charcoal mb-3">Operating Hours</h2>
+              <OperatingHoursTable hours={food?.operating_hours ?? listing.operating_hours} />
+            </section>
+          )}
+
           {/* Delivery platforms */}
           {food?.delivery_platforms && (food.delivery_platforms as string[]).length > 0 && (
             <section>
               <h2 className="text-lg font-bold text-charcoal mb-3">Order Online</h2>
               <div className="flex flex-wrap gap-2">
-                {(food.delivery_platforms as string[]).map((p: string) => (
-                  <span
-                    key={p}
-                    className="bg-warm-white border border-gray-200 rounded-full px-3 py-1 text-sm capitalize"
-                  >
-                    {p}
-                  </span>
-                ))}
+                {(food.delivery_platforms as string[]).map((p: string) => {
+                  const platformUrl = DELIVERY_URLS[p.toLowerCase()]
+                  const inner = (
+                    <span className="bg-warm-white border border-gray-200 rounded-full px-3 py-1.5 text-sm capitalize inline-flex items-center gap-1.5 hover:border-primary hover:text-primary transition-colors">
+                      <span className="material-symbols-outlined text-base">delivery_dining</span>
+                      {p}
+                    </span>
+                  )
+                  return platformUrl ? (
+                    <a key={p} href={platformUrl} target="_blank" rel="noopener noreferrer">
+                      {inner}
+                    </a>
+                  ) : (
+                    <span key={p}>{inner}</span>
+                  )
+                })}
               </div>
             </section>
           )}
@@ -184,6 +234,12 @@ export default async function RestaurantPage({ params }: Props) {
               </p>
             </section>
           )}
+
+          {/* Share buttons */}
+          <ShareButtons
+            url={`${SITE_URL}/restaurant/${listing.slug}`}
+            title={`${listing.name} — Halal in ${listing.area}, Singapore`}
+          />
         </div>
 
         {/* Sidebar / actions */}

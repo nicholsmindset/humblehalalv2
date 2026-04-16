@@ -21,6 +21,9 @@ export interface ListingCardProps {
   price_range?: number | null
   is_featured?: boolean
   category?: string
+  // Stitch additions
+  operating_hours?: Record<string, string> | null
+  delivery_platforms?: string[] | null
 }
 
 const PRICE_LABELS: Record<number, string> = {
@@ -28,6 +31,24 @@ const PRICE_LABELS: Record<number, string> = {
   2: '$$',
   3: '$$$',
   4: '$$$$',
+}
+
+function isOpenNow(hours: Record<string, string>): boolean | null {
+  try {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    const now = new Date()
+    const dayKey = days[now.getDay()]
+    const hoursStr = hours[dayKey]
+    if (!hoursStr || hoursStr.toLowerCase() === 'closed') return false
+    const [open, close] = hoursStr.split('-').map((t) => {
+      const [h, m] = t.trim().split(':').map(Number)
+      return h * 60 + (m || 0)
+    })
+    const nowMin = now.getHours() * 60 + now.getMinutes()
+    return nowMin >= open && nowMin < close
+  } catch {
+    return null
+  }
 }
 
 export function ListingCard({
@@ -44,9 +65,13 @@ export function ListingCard({
   price_range,
   is_featured,
   category,
+  operating_hours,
+  delivery_platforms,
 }: ListingCardProps) {
   const href = `/${vertical === 'food' ? 'restaurant' : vertical}/${slug}`
   const photo = photos?.[0]
+  const openStatus = operating_hours ? isOpenNow(operating_hours) : null
+  const hasDelivery = delivery_platforms && delivery_platforms.length > 0
 
   function handleView() {
     track.viewListing({
@@ -63,8 +88,8 @@ export function ListingCard({
       onClick={handleView}
       className="group bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all overflow-hidden flex flex-col"
     >
-      {/* Photo */}
-      <div className="relative h-44 bg-gray-100 overflow-hidden">
+      {/* Photo — fix 1: h-48, fix 2: gradient placeholder, fix 3: heart button */}
+      <div className="relative h-48 overflow-hidden">
         {photo ? (
           <Image
             src={photo}
@@ -74,7 +99,7 @@ export function ListingCard({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="flex items-center justify-center h-full bg-emerald-50">
+          <div className="flex items-center justify-center h-full bg-gradient-to-br from-emerald-100 to-emerald-50">
             <span className="material-symbols-outlined text-5xl text-primary/30">restaurant</span>
           </div>
         )}
@@ -83,14 +108,32 @@ export function ListingCard({
             FEATURED
           </span>
         )}
+        {/* Heart / favourite button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+          className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-white transition-colors shadow-sm"
+          aria-label="Save to favourites"
+        >
+          <span className="material-symbols-outlined text-charcoal/50 text-base">favorite_border</span>
+        </button>
       </div>
 
       {/* Body */}
       <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-bold text-charcoal text-sm leading-snug line-clamp-2">{name}</h3>
+          {/* fix 4: multiple halal badge variants */}
           {halal_status === HalalStatus.MuisCertified && (
             <MuisBadge className="shrink-0 text-[10px] px-2 py-0.5" label="MUIS" />
+          )}
+          {halal_status === HalalStatus.MuslimOwned && (
+            <span className="shrink-0 bg-emerald-50 text-primary border border-primary/20 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+              Muslim Owned
+            </span>
           )}
         </div>
 
@@ -114,11 +157,26 @@ export function ListingCard({
         {/* Location */}
         <div className="flex items-center gap-1 mt-auto pt-1">
           <span className="material-symbols-outlined text-charcoal/40 text-sm">location_on</span>
-          <span className="text-charcoal/50 text-xs line-clamp-1">{area}</span>
+          <span className="text-charcoal/50 text-xs line-clamp-1 capitalize">{area?.replace(/-/g, ' ')}</span>
         </div>
 
-        {/* Halal badge (non-MUIS) */}
-        {halal_status !== HalalStatus.MuisCertified && (
+        {/* fix 5: Open now / Closed hours indicator */}
+        {openStatus !== null && (
+          <p className={`text-[10px] font-bold ${openStatus ? 'text-primary' : 'text-red-500'}`}>
+            {openStatus ? 'Open now' : 'Closed'}
+          </p>
+        )}
+
+        {/* fix 6: Delivery badge */}
+        {hasDelivery && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-accent/10 text-accent px-2 py-0.5 rounded-full w-fit">
+            <span className="material-symbols-outlined text-xs">delivery_dining</span>
+            Delivery
+          </span>
+        )}
+
+        {/* Halal badge (non-MUIS, non-Muslim-Owned) */}
+        {halal_status !== HalalStatus.MuisCertified && halal_status !== HalalStatus.MuslimOwned && (
           <p className="text-charcoal/40 text-[10px]">
             {HALAL_STATUS_LABELS[halal_status]}
           </p>
