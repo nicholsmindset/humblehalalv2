@@ -11,6 +11,7 @@ const navLinks = [
   { label: 'Businesses', href: '/business' },
   { label: 'Events', href: '/events' },
   { label: 'Mosques', href: '/mosque' },
+  { label: 'Travel', href: '/travel' },
   { label: 'Blog', href: '/blog' },
 ]
 

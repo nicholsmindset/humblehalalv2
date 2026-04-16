@@ -2,15 +2,23 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ISR_REVALIDATE, SingaporeArea } from '@/config'
+import { NearbyFinder } from '@/components/mosques/NearbyFinder'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
 interface Props {
-  searchParams: Promise<{ area?: string; page?: string }>
+  searchParams: Promise<{ area?: string; page?: string; venue?: string }>
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { area } = await searchParams
+  const { area, venue } = await searchParams
+  if (venue) {
+    const venueName = venue.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    return {
+      title: `Prayer Rooms at ${venueName} — Singapore | HumbleHalal`,
+      description: `Find Muslim prayer rooms, wudhu facilities, and Muslim-friendly amenities at ${venueName}, Singapore.`,
+    }
+  }
   const loc = area ? `${area.replace(/-/g, ' ')} Singapore` : 'Singapore'
   return {
     title: `Prayer Rooms in ${loc.charAt(0).toUpperCase() + loc.slice(1)} | HumbleHalal`,
@@ -21,7 +29,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 const PAGE_SIZE = 24
 
 export default async function PrayerRoomsPage({ searchParams }: Props) {
-  const { area, page: pageStr } = await searchParams
+  const { area, page: pageStr, venue } = await searchParams
   const page = Math.max(1, parseInt(pageStr ?? '1', 10))
   const offset = (page - 1) * PAGE_SIZE
   const supabase = await createClient()
@@ -33,14 +41,20 @@ export default async function PrayerRoomsPage({ searchParams }: Props) {
     .range(offset, offset + PAGE_SIZE - 1)
 
   if (area) query = query.eq('area', area)
+  if (venue) query = query.ilike('location_name', `%${venue.replace(/-/g, ' ')}%`)
 
   const { data: rows, count } = (await query) as any
   const rooms = (rows ?? []) as any[]
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
+  // Derive venue display name for heading
+  const venueDisplayName = venue
+    ? venue.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    : null
+
   function buildHref(params: Record<string, string | undefined>) {
     const p = new URLSearchParams()
-    Object.entries({ area, ...params }).forEach(([k, v]) => { if (v) p.set(k, v) })
+    Object.entries({ area, venue, ...params }).forEach(([k, v]) => { if (v) p.set(k, v) })
     const qs = p.toString()
     return `/prayer-rooms${qs ? `?${qs}` : ''}`
   }
@@ -51,38 +65,66 @@ export default async function PrayerRoomsPage({ searchParams }: Props) {
         <nav className="text-sm text-charcoal/50 mb-3">
           <Link href="/" className="hover:text-primary">Home</Link>
           <span className="mx-2">›</span>
-          <span className="text-charcoal">Prayer Rooms</span>
+          {venue ? (
+            <>
+              <Link href="/malls" className="hover:text-primary">Muslim-Friendly Malls</Link>
+              <span className="mx-2">›</span>
+              <span className="text-charcoal capitalize">{venueDisplayName}</span>
+            </>
+          ) : (
+            <span className="text-charcoal">Prayer Rooms</span>
+          )}
         </nav>
-        <h1 className="text-3xl font-extrabold text-charcoal font-sans mb-2">
-          Prayer Rooms in {area ? <span className="capitalize">{area.replace(/-/g, ' ')}</span> : 'Singapore'}
-        </h1>
-        <p className="text-charcoal/50 text-sm">
-          {(count ?? 0).toLocaleString()} prayer room{(count ?? 0) !== 1 ? 's' : ''} listed
-        </p>
+        {venueDisplayName ? (
+          <>
+            <h1 className="text-3xl font-extrabold text-charcoal font-sans mb-1">
+              Prayer Rooms at {venueDisplayName}
+            </h1>
+            {rooms[0]?.area && (
+              <p className="text-charcoal/50 text-sm capitalize">
+                {rooms[0].area.replace(/-/g, ' ')}, Singapore
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <h1 className="text-3xl font-extrabold text-charcoal font-sans mb-2">
+              Prayer Rooms in {area ? <span className="capitalize">{area.replace(/-/g, ' ')}</span> : 'Singapore'}
+            </h1>
+            <p className="text-charcoal/50 text-sm">
+              {(count ?? 0).toLocaleString()} prayer room{(count ?? 0) !== 1 ? 's' : ''} listed
+            </p>
+          </>
+        )}
       </header>
 
-      {/* Area filter */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        <Link
-          href="/prayer-rooms"
-          className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${
-            !area ? 'border-primary text-primary bg-primary/5' : 'border-gray-200 text-charcoal/60 hover:border-primary/50'
-          }`}
-        >
-          All areas
-        </Link>
-        {Object.values(SingaporeArea).slice(0, 16).map((a) => (
+      {/* NearbyFinder — only shown on the main listing (not venue-specific) */}
+      {!venue && <NearbyFinder />}
+
+      {/* Area filter — hidden in venue mode */}
+      {!venue && (
+        <div className="flex flex-wrap gap-2 mb-8">
           <Link
-            key={a}
-            href={buildHref({ area: a, page: undefined })}
-            className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors capitalize ${
-              area === a ? 'border-primary text-primary bg-primary/5' : 'border-gray-200 text-charcoal/60 hover:border-primary/50'
+            href="/prayer-rooms"
+            className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${
+              !area ? 'border-primary text-primary bg-primary/5' : 'border-gray-200 text-charcoal/60 hover:border-primary/50'
             }`}
           >
-            {a.replace(/-/g, ' ')}
+            All areas
           </Link>
-        ))}
-      </div>
+          {Object.values(SingaporeArea).slice(0, 16).map((a) => (
+            <Link
+              key={a}
+              href={buildHref({ area: a, page: undefined })}
+              className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors capitalize ${
+                area === a ? 'border-primary text-primary bg-primary/5' : 'border-gray-200 text-charcoal/60 hover:border-primary/50'
+              }`}
+            >
+              {a.replace(/-/g, ' ')}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Link to prayer times */}
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-3 mb-8">

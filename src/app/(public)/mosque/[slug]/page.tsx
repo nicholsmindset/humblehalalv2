@@ -1,13 +1,37 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { ISR_REVALIDATE } from '@/config'
+import { ISR_REVALIDATE, SITE_URL } from '@/config'
+import { getSingaporePrayerTimes, getNextPrayer } from '@/lib/prayer-times'
+import { QiblaCompass } from '@/components/mosques/QiblaCompass'
+import { NearbyFinder } from '@/components/mosques/NearbyFinder'
 
 export const revalidate = ISR_REVALIDATE.LONG_TAIL
 
 interface Props {
   params: Promise<{ slug: string }>
 }
+
+const FACILITY_LABELS: Record<string, { label: string; icon: string }> = {
+  parking:              { label: 'Parking',            icon: 'local_parking' },
+  wudu:                 { label: 'Wudhu Facilities',   icon: 'water_drop' },
+  wheelchair:           { label: 'Wheelchair Access',  icon: 'accessible' },
+  library:              { label: 'Islamic Library',    icon: 'menu_book' },
+  madrasah:             { label: 'Madrasah',           icon: 'school' },
+  kindergarten:         { label: 'Kindergarten',       icon: 'child_care' },
+  childcare:            { label: 'Childcare',          icon: 'family_restroom' },
+  prayer_room:          { label: 'Prayer Room',        icon: 'mosque' },
+  separate_womens_area: { label: "Women's Prayer Area", icon: 'group' },
+  ablution_area:        { label: 'Ablution Area',      icon: 'water_drop' },
+}
+
+const PRAYER_DISPLAY = [
+  { key: 'Fajr',    label: 'Fajr',    icon: 'dark_mode' },
+  { key: 'Dhuhr',   label: 'Dhuhr',   icon: 'light_mode' },
+  { key: 'Asr',     label: 'Asr',     icon: 'wb_cloudy' },
+  { key: 'Maghrib', label: 'Maghrib', icon: 'bedtime' },
+  { key: 'Isha',    label: 'Isha',    icon: 'nightlight' },
+] as const
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -21,8 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!mosque) return { title: 'Mosque Not Found' }
 
   return {
-    title: `${mosque.name} — Mosque in ${mosque.area}, Singapore | HumbleHalal`,
-    description: `${mosque.name} is a mosque in ${mosque.area?.replace(/-/g, ' ')}, Singapore. Find prayer times, facilities, and directions.`,
+    title: `${mosque.name} — Mosque in ${mosque.area?.replace(/-/g, ' ')}, Singapore | HumbleHalal`,
+    description: `${mosque.name} is a mosque in ${mosque.area?.replace(/-/g, ' ')}, Singapore. Find prayer times, facilities, Jumu\'ah schedule, and directions.`,
   }
 }
 
@@ -30,15 +54,22 @@ export default async function MosqueDetailPage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data: mosque } = (await supabase
-    .from('mosques')
-    .select('*')
-    .eq('slug', slug)
-    .single()) as any
+  const [mosqueResult, prayerTimes] = await Promise.all([
+    (supabase as any)
+      .from('mosques')
+      .select('*')
+      .eq('slug', slug)
+      .single(),
+    getSingaporePrayerTimes(),
+  ])
 
+  const mosque = mosqueResult.data
   if (!mosque) notFound()
 
+  const nextPrayer = prayerTimes ? getNextPrayer(prayerTimes) : null
   const mapsQuery = encodeURIComponent(`${mosque.name} ${mosque.address} Singapore`)
+
+  const jummahTimes: { prayer: string; time: string }[] = mosque.jummah_times ?? []
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -87,10 +118,17 @@ export default async function MosqueDetailPage({ params }: Props) {
               Prayer room available
             </span>
           )}
+          {mosque.capacity && (
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-base">groups</span>
+              {mosque.capacity.toLocaleString()} capacity
+            </span>
+          )}
         </div>
       </header>
 
       <div className="grid md:grid-cols-3 gap-8">
+        {/* ── Main content ── */}
         <div className="md:col-span-2 space-y-8">
           {/* Address */}
           <section>
@@ -106,26 +144,66 @@ export default async function MosqueDetailPage({ params }: Props) {
             <section>
               <h2 className="text-lg font-bold text-charcoal mb-3">Facilities</h2>
               <div className="flex flex-wrap gap-2">
-                {(mosque.facilities as string[]).map((f) => (
-                  <span
-                    key={f}
-                    className="bg-emerald-50 text-primary text-sm px-3 py-1 rounded-full capitalize"
-                  >
-                    {f.replace(/_/g, ' ')}
-                  </span>
-                ))}
+                {(mosque.facilities as string[]).map((f) => {
+                  const meta = FACILITY_LABELS[f]
+                  return meta ? (
+                    <span
+                      key={f}
+                      className="inline-flex items-center gap-1.5 bg-emerald-50 text-primary text-sm px-3 py-1.5 rounded-full"
+                    >
+                      <span className="material-symbols-outlined text-sm">{meta.icon}</span>
+                      {meta.label}
+                    </span>
+                  ) : (
+                    <span
+                      key={f}
+                      className="bg-gray-100 text-charcoal/60 text-sm px-3 py-1.5 rounded-full capitalize"
+                    >
+                      {f.replace(/_/g, ' ')}
+                    </span>
+                  )
+                })}
               </div>
             </section>
           )}
 
-          {/* Friday Khutbah */}
-          {mosque.friday_khutbah_time && (
+          {/* Jumu'ah / Friday prayer */}
+          {jummahTimes.length > 0 && (
+            <section className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+              <h2 className="text-base font-bold text-charcoal mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">mosque</span>
+                Friday Jumu&apos;ah
+              </h2>
+              <div className="space-y-2">
+                {jummahTimes.map((j, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-charcoal/70 font-medium">{j.prayer}</span>
+                    <span className="text-primary font-bold">{j.time}</span>
+                  </div>
+                ))}
+              </div>
+              {mosque.friday_khutbah_time && (
+                <p className="text-charcoal/50 text-xs mt-2">
+                  <span className="material-symbols-outlined text-xs align-middle mr-1">schedule</span>
+                  Khutbah at {mosque.friday_khutbah_time}
+                </p>
+              )}
+            </section>
+          )}
+
+          {/* Programmes */}
+          {mosque.programmes && Array.isArray(mosque.programmes) && mosque.programmes.length > 0 && (
             <section>
-              <h2 className="text-lg font-bold text-charcoal mb-3">Friday Prayer</h2>
-              <p className="text-charcoal/70">
-                <span className="material-symbols-outlined text-base align-middle mr-1 text-primary">schedule</span>
-                Khutbah at {mosque.friday_khutbah_time}
-              </p>
+              <h2 className="text-lg font-bold text-charcoal mb-3">Programmes & Classes</h2>
+              <div className="space-y-2">
+                {(mosque.programmes as { name: string; schedule?: string; description?: string }[]).map((prog, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                    <p className="font-bold text-charcoal text-sm">{prog.name}</p>
+                    {prog.schedule && <p className="text-charcoal/50 text-xs mt-0.5">{prog.schedule}</p>}
+                    {prog.description && <p className="text-charcoal/60 text-sm mt-1">{prog.description}</p>}
+                  </div>
+                ))}
+              </div>
             </section>
           )}
 
@@ -155,7 +233,7 @@ export default async function MosqueDetailPage({ params }: Props) {
             </section>
           )}
 
-          {/* Phone */}
+          {/* Contact */}
           {mosque.phone && (
             <section>
               <h2 className="text-lg font-bold text-charcoal mb-3">Contact</h2>
@@ -163,12 +241,24 @@ export default async function MosqueDetailPage({ params }: Props) {
                 <span className="material-symbols-outlined text-base">call</span>
                 {mosque.phone}
               </a>
+              {mosque.website && (
+                <a
+                  href={mosque.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline flex items-center gap-2 mt-2"
+                >
+                  <span className="material-symbols-outlined text-base">language</span>
+                  Official website
+                </a>
+              )}
             </section>
           )}
         </div>
 
-        {/* Sidebar */}
+        {/* ── Sidebar ── */}
         <aside className="space-y-4">
+          {/* Directions + prayer times links */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
             <div className="flex gap-2 text-sm text-charcoal/70">
               <span className="material-symbols-outlined text-charcoal/40 shrink-0">location_on</span>
@@ -183,15 +273,71 @@ export default async function MosqueDetailPage({ params }: Props) {
               <span className="material-symbols-outlined text-base">directions</span>
               Get Directions
             </a>
-            <a
-              href="/prayer-times/singapore"
-              className="flex items-center justify-center gap-2 w-full border border-gray-200 text-charcoal rounded-lg px-4 py-2.5 text-sm font-medium hover:border-primary transition-colors"
-            >
-              <span className="material-symbols-outlined text-base">schedule</span>
-              Prayer Times
-            </a>
           </div>
+
+          {/* Today's prayer times */}
+          {prayerTimes && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="font-bold text-charcoal text-sm mb-3 flex items-center gap-1">
+                <span className="material-symbols-outlined text-primary text-base">schedule</span>
+                Today&apos;s Prayer Times
+              </h3>
+              <div className="space-y-2">
+                {PRAYER_DISPLAY.map(({ key, label, icon }) => {
+                  const time = prayerTimes[key]
+                  const isNext = key === nextPrayer
+                  return (
+                    <div
+                      key={key}
+                      className={`flex justify-between items-center text-sm rounded px-2 py-1 ${
+                        isNext ? 'bg-primary/10 font-semibold' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className={`material-symbols-outlined text-sm ${isNext ? 'text-primary' : 'text-charcoal/30'}`}>
+                          {icon}
+                        </span>
+                        <span className={isNext ? 'text-primary' : 'text-charcoal/70'}>{label}</span>
+                        {isNext && (
+                          <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">NEXT</span>
+                        )}
+                      </div>
+                      <span className={`tabular-nums font-bold ${isNext ? 'text-primary' : 'text-charcoal'}`}>
+                        {time}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              {jummahTimes.length > 0 && (
+                <div className="border-t border-gray-100 mt-3 pt-3">
+                  <p className="text-xs text-charcoal/50 mb-1">Jumu&apos;ah</p>
+                  {jummahTimes.slice(0, 2).map((j, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-charcoal/60 text-xs">{j.prayer}</span>
+                      <span className="text-primary font-bold text-xs">{j.time}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <a
+                href="/prayer-times/singapore"
+                className="flex items-center gap-1 text-primary text-xs font-medium hover:underline mt-3"
+              >
+                Full prayer timetable →
+              </a>
+            </div>
+          )}
+
+          {/* Qibla compass */}
+          <QiblaCompass />
         </aside>
+      </div>
+
+      {/* Nearby finder */}
+      <div className="mt-12 pt-8 border-t border-gray-100">
+        <h2 className="text-lg font-bold text-charcoal mb-4">Find Mosques & Prayer Rooms Near You</h2>
+        <NearbyFinder />
       </div>
 
       {/* JSON-LD */}
@@ -210,7 +356,7 @@ export default async function MosqueDetailPage({ params }: Props) {
               addressCountry: 'SG',
             },
             telephone: mosque.phone,
-            url: `https://humblehalal.sg/mosque/${mosque.slug}`,
+            url: mosque.website ?? `${SITE_URL}/mosque/${mosque.slug}`,
           }),
         }}
       />

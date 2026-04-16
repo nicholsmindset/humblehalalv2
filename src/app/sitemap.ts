@@ -1,8 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { SingaporeArea, SITE_URL } from '@/config'
+import { SingaporeArea, CuisineType, BusinessCategory, SITE_URL } from '@/config'
 
 const AREAS = Object.values(SingaporeArea)
+const CUISINES = Object.values(CuisineType)
+const BUSINESS_CATEGORIES = Object.values(BusinessCategory)
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient()
@@ -27,15 +29,59 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ── Static pages ──────────────────────────────────────────
   const staticPages: MetadataRoute.Sitemap = [
-    { url: SITE_URL,                         lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
-    { url: `${SITE_URL}/halal-food`,         lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
-    { url: `${SITE_URL}/events`,             lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
-    { url: `${SITE_URL}/mosque`,             lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
-    { url: `${SITE_URL}/blog`,               lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
-    { url: `${SITE_URL}/prayer-times/singapore`, lastModified: now, changeFrequency: 'daily',  priority: 0.8 },
-    { url: `${SITE_URL}/prayer-rooms`,       lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
-    { url: `${SITE_URL}/login`,              lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: SITE_URL,                              lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
+    { url: `${SITE_URL}/halal-food`,              lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${SITE_URL}/events`,                  lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${SITE_URL}/mosque`,                  lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
+    { url: `${SITE_URL}/blog`,                    lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
+    { url: `${SITE_URL}/prayer-times/singapore`,  lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
+    { url: `${SITE_URL}/prayer-rooms`,            lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${SITE_URL}/malls`,                   lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${SITE_URL}/mosque/map`,              lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${SITE_URL}/travel`,                  lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${SITE_URL}/business`,                lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${SITE_URL}/about`,                   lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/contact`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/terms`,                   lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${SITE_URL}/privacy`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${SITE_URL}/login`,                   lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
   ]
+
+  // ── pSEO: Cuisine pages (/halal-food?cuisine=) ────────────
+  const cuisinePages: MetadataRoute.Sitemap = CUISINES.map((c) => ({
+    url: `${SITE_URL}/halal-food?cuisine=${c}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+
+  // ── pSEO: Cuisine × Area pages ────────────────────────────
+  const cuisineAreaPages: MetadataRoute.Sitemap = CUISINES.flatMap((c) =>
+    AREAS.map((a) => ({
+      url: `${SITE_URL}/halal-food?cuisine=${c}&area=${a}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
+  )
+
+  // ── pSEO: Business category × Area pages ─────────────────
+  const businessAreaPages: MetadataRoute.Sitemap = BUSINESS_CATEGORIES.flatMap((cat) =>
+    AREAS.map((a) => ({
+      url: `${SITE_URL}/business?category=${cat}&area=${a}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }))
+  )
+
+  // ── pSEO: Mosque by area pages ────────────────────────────
+  const mosqueAreaPages: MetadataRoute.Sitemap = AREAS.map((a) => ({
+    url: `${SITE_URL}/mosque?area=${a}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
 
   // ── Prayer rooms by area ──────────────────────────────────
   const prayerRoomAreaPages: MetadataRoute.Sitemap = AREAS.map((area) => ({
@@ -87,6 +133,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
+    ...cuisinePages,
+    ...cuisineAreaPages,
+    ...businessAreaPages,
+    ...mosqueAreaPages,
     ...prayerRoomAreaPages,
     ...listingPages,
     ...mosquePages,
