@@ -22,8 +22,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  if (event.type === 'checkout.session.completed') {
-    await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+  // Replay protection: Stripe's library verifies the timestamp signature, but
+  // we add an application-level freshness window as defence-in-depth.
+  const MAX_EVENT_AGE_SECONDS = 300
+  const ageSeconds = Math.floor(Date.now() / 1000) - event.created
+  if (ageSeconds > MAX_EVENT_AGE_SECONDS) {
+    console.warn(`[stripe webhook] rejecting stale event ${event.id} (age ${ageSeconds}s)`)
+    return NextResponse.json({ error: 'Event too old' }, { status: 400 })
+  }
+
+  switch (event.type) {
+    case 'checkout.session.completed':
+      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+      break
+    default:
+      console.log(`[stripe webhook] ignoring unhandled event type: ${event.type}`)
   }
 
   return NextResponse.json({ received: true })
