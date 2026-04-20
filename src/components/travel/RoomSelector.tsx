@@ -28,7 +28,7 @@ export function RoomSelector({ hotelId, rates, checkin, checkout, guests }: Room
   )
 
   const checkoutUrl = selectedOfferId
-    ? `/travel/hotels/${hotelId}/checkout?offerId=${encodeURIComponent(selectedOfferId)}&checkin=${checkin}&checkout=${checkout}&guests=${guests}`
+    ? `/travel/hotels/${hotelId}/checkout?offerId=${encodeURIComponent(selectedOfferId)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&guests=${guests}`
     : null
 
   return (
@@ -44,6 +44,7 @@ export function RoomSelector({ hotelId, rates, checkin, checkout, guests }: Room
           <button
             key={rate.offerId}
             onClick={() => setSelectedOfferId(rate.offerId)}
+            aria-pressed={isSelected}
             className={cn(
               'w-full text-left p-3 rounded-lg border transition-all',
               isSelected
