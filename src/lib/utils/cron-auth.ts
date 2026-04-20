@@ -2,7 +2,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 /**
  * Verifies the cron secret on every cron route.
- * Returns null if authorised, or a 401 NextResponse if not.
+ * Returns null if authorised, or a NextResponse with an error status if not.
+ *
+ * Fails CLOSED:
+ *   - 500 if CRON_SECRET env var is unset or empty (misconfiguration)
+ *   - 401 if the Authorization header does not match Bearer <CRON_SECRET>
+ *   - null if authorised
  *
  * Usage:
  *   const deny = verifyCronSecret(request)
@@ -11,8 +16,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 export function verifyCronSecret(request: NextRequest): NextResponse | null {
   const secret = process.env.CRON_SECRET
   if (!secret) {
-    console.warn('CRON_SECRET is not set — cron endpoints are unprotected')
-    return null
+    return NextResponse.json(
+      { error: 'CRON_SECRET not configured' },
+      { status: 500 },
+    )
   }
 
   const authHeader = request.headers.get('Authorization')
