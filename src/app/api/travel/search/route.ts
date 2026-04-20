@@ -3,15 +3,22 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getLiteApiClient } from '@/lib/liteapi/client'
 import { enrichHotels, type HotelLocation } from '@/lib/liteapi/enrich'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/server'
 import { checkLimit, travelSearchLimiter, getIdentifier } from '@/lib/security/rate-limit'
+import { travelSearchSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   const rl = await checkLimit(travelSearchLimiter, getIdentifier(request))
   if (rl.limited) return rl.response
 
   const body = await request.json()
-  const { destination, checkin, checkout, guests, currency = 'SGD' } = body
+
+  const parsedBody = travelSearchSchema.safeParse(body)
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: parsedBody.error }, { status: 400 })
+  }
+
+  const { destination, checkin, checkout, guests, currency = 'SGD', placeId } = parsedBody.data
 
   if (!destination || !checkin || !checkout || !guests) {
     return NextResponse.json({ error: 'Missing required search parameters' }, { status: 400 })
@@ -63,7 +70,7 @@ export async function POST(request: NextRequest) {
 
   let ratesResult: any
   try {
-    ratesResult = await liteapi.getFullRates({
+    const ratesParams: Record<string, any> = {
       hotelIds: hotelIds.slice(0, 50),
       checkin,
       checkout,
@@ -71,7 +78,10 @@ export async function POST(request: NextRequest) {
       currency,
       guestNationality: 'SG',
       timeout: 20,
-    })
+    }
+    if (placeId) ratesParams.placeId = placeId
+
+    ratesResult = await liteapi.getFullRates(ratesParams)
   } catch (err: any) {
     console.error('[travel/search] getFullRates error:', err?.message)
     return NextResponse.json({ error: 'Hotel search failed' }, { status: 502 })
@@ -82,33 +92,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Hotel search failed' }, { status: 502 })
   }
 
-  // Merge static hotel data with rates
+  // Merge static hotel data with rates — normalize LiteAPI field names to UI contract
   const ratesList: any[] = ratesResult?.data?.data ?? ratesResult?.data ?? []
   const hotels: any[] = ratesList.map((r: any) => {
     const id = r.hotelId ?? r.id
     const staticData = hotelStaticMap[id] ?? {}
-    return {
-      ...staticData,
+    const normalized = {
       hotelId: id,
+      name: staticData.name ?? '',
+      imageUrl: staticData.main_photo ?? staticData.thumbnail ?? null,
+      starRating: staticData.stars ?? 0,
+      guestRating: staticData.rating ?? null,
+      reviewCount: staticData.reviewCount ?? 0,
+      address: staticData.address ?? staticData.location?.address ?? '',
+      city: destination,
+      latitude: staticData.latitude ?? staticData.location?.latitude ?? null,
+      longitude: staticData.longitude ?? staticData.location?.longitude ?? null,
+      facilityIds: staticData.facilityIds ?? [],
+      country: staticData.country ?? null,
       rates: r.roomTypes ?? r.rates ?? [],
-      // normalise location shape
-      location: {
-        latitude: staticData.latitude ?? staticData.location?.latitude,
-        longitude: staticData.longitude ?? staticData.location?.longitude,
-        city: destination,
-        address: staticData.address ?? staticData.location?.address ?? '',
-      },
     }
+    return normalized
   }).filter((h: any) => h.rates?.length > 0)
 
   // Build locations for enrichment
   const locations: HotelLocation[] = hotels
-    .filter((h: any) => h.location?.latitude && h.location?.longitude)
+    .filter((h: any) => h.latitude && h.longitude)
     .map((h: any) => ({
       hotelId: h.hotelId,
-      latitude: parseFloat(h.location.latitude),
-      longitude: parseFloat(h.location.longitude),
-      facilities: h.hotelFacilities ?? h.facilities ?? [],
+      latitude: parseFloat(h.latitude),
+      longitude: parseFloat(h.longitude),
+      facilities: h.facilityIds ?? [],
       boardCodes: (h.rates ?? []).map((r: any) => r.boardCode ?? ''),
     }))
 
@@ -122,10 +136,8 @@ export async function POST(request: NextRequest) {
 
   // Log search for demand analytics (best-effort)
   try {
-    const db = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    ) as any
+    // Use admin client: travel_search_log is an analytics/admin table that requires service role for inserts
+    const db = await createAdminClient()
     await db.from('travel_search_log').insert({
       destination,
       check_in: checkin,

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MuslimBadges } from '@/components/travel/MuslimBadges'
+import { RoomSelector } from '@/components/travel/RoomSelector'
 import type { MuslimEnrichment } from '@/lib/liteapi/enrich'
 import { formatDistance } from '@/lib/liteapi/enrich'
 
@@ -23,7 +24,8 @@ interface HotelDetail {
     longitude?: string
   }
   facilities?: string[]
-  guestReviews?: { rating?: number; count?: number }
+  guestRating?: number | null
+  reviewCount?: number
   checkInTime?: string
   checkOutTime?: string
   rates?: any[]
@@ -98,12 +100,6 @@ export default function HotelDetailPage() {
   }
 
   const images = hotel.hotelImages ?? []
-  const lowestRate = hotel.rates?.reduce((best: any, r: any) => {
-    const amount = r.retailRate?.total?.[0]?.amount ?? Infinity
-    return amount < (best?.retailRate?.total?.[0]?.amount ?? Infinity) ? r : best
-  }, null)
-  const price = lowestRate?.retailRate?.total?.[0]
-  const isRefundable = lowestRate?.cancellationPolicies?.cancelPolicyInfos?.[0]?.policy?.toLowerCase().includes('free') ?? false
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -190,13 +186,13 @@ export default function HotelDetailPage() {
                   </p>
                 )}
               </div>
-              {hotel.guestReviews?.rating && (
+              {hotel.guestRating != null && (
                 <div className="text-right flex-shrink-0">
                   <div className="bg-primary text-white font-extrabold text-lg rounded-xl px-3 py-1">
-                    {hotel.guestReviews.rating.toFixed(1)}
+                    {hotel.guestRating!.toFixed(1)}
                   </div>
-                  {hotel.guestReviews.count && (
-                    <p className="text-xs text-charcoal/40 mt-1">{hotel.guestReviews.count.toLocaleString()} reviews</p>
+                  {hotel.reviewCount && (
+                    <p className="text-xs text-charcoal/40 mt-1">{hotel.reviewCount!.toLocaleString()} reviews</p>
                   )}
                 </div>
               )}
@@ -283,26 +279,14 @@ export default function HotelDetailPage() {
         {/* Sticky booking panel */}
         <div className="lg:col-span-1">
           <div className="bg-white border border-gray-200 rounded-2xl p-5 sticky top-24 space-y-4">
-            {price ? (
-              <>
-                <div>
-                  <p className="text-xs text-charcoal/40">from</p>
-                  <p className="text-3xl font-extrabold text-primary">{price.currency} {price.amount.toLocaleString()}</p>
-                  <p className="text-xs text-charcoal/40">/night · taxes included</p>
-                </div>
-                {isRefundable && (
-                  <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                    Free cancellation available
-                  </p>
-                )}
-                <Link
-                  href={`/travel/hotels/${hotelId}/checkout?offerId=${lowestRate?.offerId ?? ''}&${searchParams.toString()}`}
-                  className="block w-full text-center bg-accent text-charcoal font-bold py-3 rounded-xl hover:bg-accent/90 transition-colors text-sm"
-                >
-                  Book now
-                </Link>
-              </>
+            {(hotel.rates && hotel.rates.length > 0) ? (
+              <RoomSelector
+                hotelId={hotel.hotelId ?? hotel.id ?? hotelId}
+                rates={hotel.rates}
+                checkin={checkin}
+                checkout={checkout}
+                guests={Number(guests)}
+              />
             ) : (
               <div className="text-center py-4 text-charcoal/40">
                 <p className="text-sm">Search for availability to see prices</p>
