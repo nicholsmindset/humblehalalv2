@@ -12,10 +12,11 @@ interface Hotel {
   id?: string
   name: string
   starRating?: number
-  hotelImages?: { url: string }[]
+  imageUrl?: string | null
   rates?: { retailRate?: { total?: [{ amount: number; currency: string }] }; cancellationPolicies?: { cancelPolicyInfos?: { policy: string }[] } }[]
   location?: { city?: string; address?: string }
-  guestReviews?: { rating?: number; count?: number }
+  guestRating?: number | null
+  reviewCount?: number
   muslimEnrichment: MuslimEnrichment | null
 }
 
@@ -145,7 +146,7 @@ function HotelSearchContent() {
         return (b.muslimEnrichment?.muslimFriendlyScore ?? 0) - (a.muslimEnrichment?.muslimFriendlyScore ?? 0)
       }
       if (sortBy === 'rating') {
-        return (b.guestReviews?.rating ?? 0) - (a.guestReviews?.rating ?? 0)
+        return (b.guestRating ?? 0) - (a.guestRating ?? 0)
       }
       // price
       const priceA = a.rates?.[0]?.retailRate?.total?.[0]?.amount ?? Infinity
@@ -276,13 +277,13 @@ function HotelSearchContent() {
                     hotelId={id}
                     name={h.name}
                     stars={h.starRating ?? 0}
-                    imageUrl={h.hotelImages?.[0]?.url ?? null}
+                    imageUrl={h.imageUrl ?? null}
                     pricePerNight={price ? price.amount : null}
                     currency={price?.currency ?? 'SGD'}
                     city={h.location?.city ?? ''}
                     address={h.location?.address ?? ''}
-                    reviewRating={h.guestReviews?.rating ?? null}
-                    reviewCount={h.guestReviews?.count ?? null}
+                    reviewRating={h.guestRating ?? null}
+                    reviewCount={h.reviewCount ?? null}
                     isRefundable={cancellation?.toLowerCase().includes('free') ?? false}
                     muslimEnrichment={h.muslimEnrichment}
                     searchParams={passThrough}
