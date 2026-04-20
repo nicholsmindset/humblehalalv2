@@ -19,6 +19,7 @@ import {
   buildEnrichListingPrompt,
   SYSTEM_ENRICHER,
 } from '@/lib/anthropic/prompts'
+import { aiGenerateSchema, validationError } from '@/lib/validation/schemas'
 
 type GenerateType = 'blog' | 'travel' | 'newsletter' | 'meta' | 'description'
 
@@ -40,12 +41,10 @@ export async function POST(request: NextRequest) {
   }
   const supabase = auth.supabase!
 
-  const body = await request.json()
-  const { type, params } = body as { type: GenerateType; params: Record<string, unknown> }
-
-  if (!type || !params) {
-    return NextResponse.json({ error: 'Missing type or params' }, { status: 400 })
-  }
+  const raw = await request.json()
+  const parsed = aiGenerateSchema.safeParse(raw)
+  if (!parsed.success) return validationError(parsed.error.issues)
+  const { type, params } = parsed.data as { type: GenerateType; params: Record<string, unknown> }
 
   try {
     switch (type) {

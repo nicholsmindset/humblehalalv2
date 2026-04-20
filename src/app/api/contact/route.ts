@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkLimit, contentLimiter, getIdentifier } from '@/lib/security/rate-limit'
 import { sanitisePlainText } from '@/lib/security/sanitise'
 import { getResend, FROM_ADDRESS } from '@/lib/resend/index'
+import { contactSchema, validationError } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   // Rate limit by IP (no auth required for contact form)
@@ -11,28 +12,19 @@ export async function POST(request: NextRequest) {
   const rl = await checkLimit(contentLimiter, identifier)
   if (rl.limited) return rl.response
 
-  let body: { name?: string; email?: string; message?: string }
+  let raw: unknown
   try {
-    body = await request.json()
+    raw = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const name    = sanitisePlainText(body.name    ?? '').trim()
-  const email   = sanitisePlainText(body.email   ?? '').trim()
-  const message = sanitisePlainText(body.message ?? '').trim()
+  const parsed = contactSchema.safeParse(raw)
+  if (!parsed.success) return validationError(parsed.error.issues)
 
-  if (name.length < 2)
-    return NextResponse.json({ error: 'Name is too short' }, { status: 400 })
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
-
-  if (message.length < 10)
-    return NextResponse.json({ error: 'Message is too short (min 10 characters)' }, { status: 400 })
-
-  if (message.length > 2000)
-    return NextResponse.json({ error: 'Message is too long (max 2000 characters)' }, { status: 400 })
+  const name    = sanitisePlainText(parsed.data.name).trim()
+  const email   = sanitisePlainText(parsed.data.email).trim()
+  const message = sanitisePlainText(parsed.data.message).trim()
 
   if (!process.env.RESEND_API_KEY) {
     console.warn('[contact] RESEND_API_KEY not set — skipping email send')

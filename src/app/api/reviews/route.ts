@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { checkLimit, contentLimiter, getIdentifier } from '@/lib/security/rate-limit'
 import { verifyCaptcha } from '@/lib/security/captcha'
 import { sanitiseHTML, sanitisePlainText } from '@/lib/security/sanitise'
+import { reviewSchema, validationError } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -18,20 +19,14 @@ export async function POST(request: NextRequest) {
   const rl = await checkLimit(contentLimiter, getIdentifier(request, user.id))
   if (rl.limited) return rl.response
 
-  const body = await request.json()
-  const { listing_id, rating, title, body: reviewBody, captchaToken } = body
+  const raw = await request.json()
+  const parsed = reviewSchema.safeParse(raw)
+  if (!parsed.success) return validationError(parsed.error.issues)
+  const { listing_id, rating, title, body: reviewBody, captchaToken } = parsed.data
 
   // CAPTCHA verification (skipped in dev if TURNSTILE_SECRET_KEY not set)
   if (!await verifyCaptcha(captchaToken)) {
     return NextResponse.json({ error: 'CAPTCHA verification failed' }, { status: 400 })
-  }
-
-  if (!listing_id || !rating || !reviewBody) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-  }
-
-  if (typeof rating !== 'number' || rating < 1 || rating > 5) {
-    return NextResponse.json({ error: 'Rating must be 1–5' }, { status: 400 })
   }
 
   // Sanitise user content

@@ -5,13 +5,19 @@ import { getLiteApiClient } from '@/lib/liteapi/client'
 import { enrichHotels, type HotelLocation } from '@/lib/liteapi/enrich'
 import { createClient } from '@supabase/supabase-js'
 import { checkLimit, travelSearchLimiter, getIdentifier } from '@/lib/security/rate-limit'
+import { travelSearchSchema, validationError } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   const rl = await checkLimit(travelSearchLimiter, getIdentifier(request))
   if (rl.limited) return rl.response
 
-  const body = await request.json()
-  const { destination, checkin, checkout, guests, currency = 'SGD' } = body
+  const raw = await request.json()
+  const parsedBody = travelSearchSchema.safeParse(raw)
+  if (!parsedBody.success) return validationError(parsedBody.error.issues)
+
+  const { destination, checkin, checkout, guests, currency = 'SGD' } = parsedBody.data as {
+    destination: string; checkin?: string; checkout?: string; guests?: unknown; currency?: string
+  }
 
   if (!destination || !checkin || !checkout || !guests) {
     return NextResponse.json({ error: 'Missing required search parameters' }, { status: 400 })

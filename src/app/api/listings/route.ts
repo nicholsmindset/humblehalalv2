@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { checkLimit, contentLimiter, getIdentifier } from '@/lib/security/rate-limit'
 import { sanitisePlainText, sanitiseHTML } from '@/lib/security/sanitise'
+import { listingCreateSchema, listingUpdateSchema, validationError } from '@/lib/validation/schemas'
 
 // ── GET /api/listings ─────────────────────────────────────────────────────
 // Public: list active listings with optional filters
@@ -57,26 +58,22 @@ export async function POST(request: NextRequest) {
   const rl = await checkLimit(contentLimiter, getIdentifier(request, user.id))
   if (rl.limited) return rl.response
 
-  let body: Record<string, unknown>
+  let raw: unknown
   try {
-    body = await request.json()
+    raw = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { name, area, vertical, description, address, phone, website, halal_status } = body as Record<string, string | undefined>
+  const parsedBody = listingCreateSchema.safeParse(raw)
+  if (!parsedBody.success) return validationError(parsedBody.error.issues)
 
-  if (!name || !area || !vertical) {
-    return NextResponse.json({ error: 'name, area, and vertical are required' }, { status: 400 })
+  const { name, area, vertical, description, address, phone, website, halal_status } = parsedBody.data as {
+    name: string; area: string; vertical: string; description?: string | null;
+    address?: string | null; phone?: string | null; website?: string | null; halal_status?: string
   }
 
-  const ALLOWED_VERTICALS = ['food', 'services', 'products', 'catering', 'travel']
-  if (!ALLOWED_VERTICALS.includes(vertical)) {
-    return NextResponse.json({ error: 'Invalid vertical' }, { status: 400 })
-  }
-
-  const ALLOWED_HALAL = ['muis_certified', 'muslim_owned', 'self_declared', 'not_applicable']
-  const cleanHalal = halal_status && ALLOWED_HALAL.includes(halal_status) ? halal_status : 'self_declared'
+  const cleanHalal = halal_status ?? 'self_declared'
 
   // Sanitise all user-supplied text
   const cleanName = sanitisePlainText(name).trim().slice(0, 150)
@@ -140,17 +137,19 @@ export async function PATCH(request: NextRequest) {
   const rl = await checkLimit(contentLimiter, getIdentifier(request, user.id))
   if (rl.limited) return rl.response
 
-  let body: Record<string, unknown>
+  let rawPatch: unknown
   try {
-    body = await request.json()
+    rawPatch = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { id, name, description, address, phone, website, halal_status } = body as Record<string, string | undefined>
+  const parsedPatch = listingUpdateSchema.safeParse(rawPatch)
+  if (!parsedPatch.success) return validationError(parsedPatch.error.issues)
 
-  if (!id) {
-    return NextResponse.json({ error: 'id is required' }, { status: 400 })
+  const { id, name, description, address, phone, website, halal_status } = parsedPatch.data as {
+    id: string; name?: string; description?: string | null; address?: string | null;
+    phone?: string | null; website?: string | null; halal_status?: string
   }
 
   // Verify ownership (RLS will also enforce this, but give a clear error)
