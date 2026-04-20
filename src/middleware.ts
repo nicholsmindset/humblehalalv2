@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import csrf from 'edge-csrf'
+import { createCsrfProtect } from '@edge-csrf/nextjs'
 import { updateSession } from '@/lib/supabase/middleware'
 import { authLimiter, searchLimiter, checkLimit, getIdentifier } from '@/lib/security/rate-limit'
 
@@ -9,7 +9,7 @@ const AUTH_ROUTES = ['/login', '/signup']
 // CSRF paths to skip (webhooks, analytics ingestion, cron jobs, travel APIs)
 const CSRF_SKIP_PATHS = ['/api/webhooks', '/api/track', '/api/cron', '/api/travel']
 
-const csrfProtect = csrf({
+const csrfProtect = createCsrfProtect({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     name: '_csrf',
