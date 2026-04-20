@@ -37,14 +37,30 @@ function safeParseTravelSearch(raw: unknown):
     return { success: false, error: 'checkout is required' }
   }
 
-  if (!body.guests) {
-    return { success: false, error: 'guests is required' }
+  // Fix 3: ISO date format validation (YYYY-MM-DD)
+  const dateRe = /^\d{4}-\d{2}-\d{2}$/
+  if (!dateRe.test(checkin) || !dateRe.test(checkout)) {
+    return { success: false, error: 'checkin and checkout must be YYYY-MM-DD' }
   }
 
-  // placeId is optional — must be a string if present
+  // Fix 2: guests structural validation
+  const guests = body.guests
+  if (!guests) {
+    return { success: false, error: 'guests is required' }
+  }
+  if (typeof guests !== 'number' && !Array.isArray(guests)) {
+    return { success: false, error: 'guests must be a number or array' }
+  }
+  if (Array.isArray(guests) && guests.length === 0) {
+    return { success: false, error: 'guests array must not be empty' }
+  }
+
+  // Fix 1: placeId length + character constraint
   const placeId = body.placeId
-  if (placeId !== undefined && typeof placeId !== 'string') {
-    return { success: false, error: 'placeId must be a string' }
+  if (placeId !== undefined) {
+    if (typeof placeId !== 'string' || placeId.length > 300 || !/^[\w-]+$/.test(placeId)) {
+      return { success: false, error: 'placeId is invalid' }
+    }
   }
 
   const currency = body.currency
