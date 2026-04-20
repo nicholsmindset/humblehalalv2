@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'Travel Analytics | HumbleHalal Admin',
@@ -17,10 +17,7 @@ function fmtN(n: number) {
 }
 
 export default async function TravelAnalyticsPage() {
-  const db = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  ) as any
+  const db = await createClient()
 
   const now = new Date()
   const start30d = new Date(now); start30d.setDate(start30d.getDate() - 30)
