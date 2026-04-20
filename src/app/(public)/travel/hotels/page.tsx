@@ -98,6 +98,7 @@ function HotelSearchContent() {
   const checkin = searchParams.get('checkin') ?? ''
   const checkout = searchParams.get('checkout') ?? ''
   const guestsParam = parseInt(searchParams.get('guests') ?? '2')
+  const placeId = searchParams.get('placeId') ?? ''
 
   const [hotels, setHotels] = useState<Hotel[]>([])
   const [loading, setLoading] = useState(false)
@@ -120,6 +121,7 @@ function HotelSearchContent() {
           checkin,
           checkout,
           guests: [{ adults: guestsParam, children: 0, childAges: [] }],
+          ...(placeId && { placeId }),
         }),
       })
       if (!res.ok) throw new Error('Search failed')
@@ -130,7 +132,7 @@ function HotelSearchContent() {
     } finally {
       setLoading(false)
     }
-  }, [dest, checkin, checkout, guestsParam])
+  }, [dest, checkin, checkout, guestsParam, placeId])
 
   useEffect(() => { search() }, [search])
 

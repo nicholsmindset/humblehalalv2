@@ -24,7 +24,8 @@ interface HotelDetail {
     longitude?: string
   }
   facilities?: string[]
-  guestReviews?: { rating?: number; count?: number }
+  guestRating?: number | null
+  reviewCount?: number
   checkInTime?: string
   checkOutTime?: string
   rates?: any[]
@@ -185,13 +186,13 @@ export default function HotelDetailPage() {
                   </p>
                 )}
               </div>
-              {hotel.guestReviews?.rating && (
+              {hotel.guestRating != null && (
                 <div className="text-right flex-shrink-0">
                   <div className="bg-primary text-white font-extrabold text-lg rounded-xl px-3 py-1">
-                    {hotel.guestReviews.rating.toFixed(1)}
+                    {hotel.guestRating!.toFixed(1)}
                   </div>
-                  {hotel.guestReviews.count && (
-                    <p className="text-xs text-charcoal/40 mt-1">{hotel.guestReviews.count.toLocaleString()} reviews</p>
+                  {hotel.reviewCount && (
+                    <p className="text-xs text-charcoal/40 mt-1">{hotel.reviewCount!.toLocaleString()} reviews</p>
                   )}
                 </div>
               )}

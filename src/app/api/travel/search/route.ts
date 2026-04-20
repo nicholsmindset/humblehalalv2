@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getLiteApiClient } from '@/lib/liteapi/client'
 import { enrichHotels, type HotelLocation } from '@/lib/liteapi/enrich'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { checkLimit, travelSearchLimiter, getIdentifier } from '@/lib/security/rate-limit'
 import { travelSearchSchema } from '@/lib/validation/schemas'
 
@@ -136,7 +136,8 @@ export async function POST(request: NextRequest) {
 
   // Log search for demand analytics (best-effort)
   try {
-    const db = await createClient()
+    // Use admin client: travel_search_log is an analytics/admin table that requires service role for inserts
+    const db = await createAdminClient()
     await db.from('travel_search_log').insert({
       destination,
       check_in: checkin,
