@@ -12,18 +12,18 @@ export const reviewSchema = z.object({
 
 // ── Contact form ──────────────────────────────────────────────────────────────
 export const contactSchema = z.object({
-  name:         z.string().min(1).max(100),
+  name:         z.string().min(2).max(100),
   email:        z.string().email(),
   subject:      z.string().max(200).optional(),
-  message:      z.string().min(1).max(5000),
+  message:      z.string().min(1).max(2000),
   captchaToken: z.string().optional(),
 })
 
 // ── Listing creation / update ─────────────────────────────────────────────────
 // The POST handler uses: name, area, vertical, description, address, phone,
 // website, halal_status.  The PATCH handler uses: id, name, description,
-// address, phone, website, halal_status.  We validate these explicitly and
-// accept any extra fields with .passthrough() so future fields don't break.
+// address, phone, website, halal_status.  Unknown fields are stripped by
+// default (no .passthrough()) to prevent unexpected data from reaching the DB.
 export const listingCreateSchema = z.object({
   name:         z.string().min(1).max(200),
   area:         z.string().min(1).max(100),
@@ -33,7 +33,7 @@ export const listingCreateSchema = z.object({
   phone:        z.string().max(40).optional().nullable(),
   website:      z.string().url().optional().nullable(),
   halal_status: z.enum(['muis_certified', 'muslim_owned', 'self_declared', 'not_applicable']).optional(),
-}).passthrough()
+})
 
 export const listingUpdateSchema = z.object({
   id:           z.string().uuid(),
@@ -43,7 +43,7 @@ export const listingUpdateSchema = z.object({
   phone:        z.string().max(40).optional().nullable(),
   website:      z.string().url().optional().nullable(),
   halal_status: z.enum(['muis_certified', 'muslim_owned', 'self_declared', 'not_applicable']).optional(),
-}).passthrough()
+})
 
 // ── AI content generation ─────────────────────────────────────────────────────
 // The route receives { type, params } where params varies by type.
@@ -60,11 +60,11 @@ export const aiGenerateSchema = z.object({
 //       taxonomy is finalised.
 export const travelSearchSchema = z.object({
   destination: z.string().min(1).max(100),
-  checkin:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'checkin must be YYYY-MM-DD').optional(),
-  checkout:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'checkout must be YYYY-MM-DD').optional(),
-  guests:      z.unknown().optional(),
+  checkin:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'checkin must be YYYY-MM-DD'),
+  checkout:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'checkout must be YYYY-MM-DD'),
+  guests:      z.unknown(),
   currency:    z.string().max(10).optional(),
-}).passthrough()
+})
 
 // ── Validation error helper ───────────────────────────────────────────────────
 export function validationError(issues: z.ZodIssue[]) {

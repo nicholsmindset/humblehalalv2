@@ -15,13 +15,7 @@ export async function POST(request: NextRequest) {
   const parsedBody = travelSearchSchema.safeParse(raw)
   if (!parsedBody.success) return validationError(parsedBody.error.issues)
 
-  const { destination, checkin, checkout, guests, currency = 'SGD' } = parsedBody.data as {
-    destination: string; checkin?: string; checkout?: string; guests?: unknown; currency?: string
-  }
-
-  if (!destination || !checkin || !checkout || !guests) {
-    return NextResponse.json({ error: 'Missing required search parameters' }, { status: 400 })
-  }
+  const { destination, checkin, checkout, guests, currency = 'SGD' } = parsedBody.data
 
   let liteapi: any
   try {

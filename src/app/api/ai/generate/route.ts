@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   const raw = await request.json()
   const parsed = aiGenerateSchema.safeParse(raw)
   if (!parsed.success) return validationError(parsed.error.issues)
-  const { type, params } = parsed.data as { type: GenerateType; params: Record<string, unknown> }
+  const { type, params } = parsed.data
 
   try {
     switch (type) {
