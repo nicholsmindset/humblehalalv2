@@ -9,6 +9,11 @@ interface Place {
   description: string
 }
 
+interface DestinationState {
+  name: string
+  placeId: string
+}
+
 interface Props {
   defaultDestination?: string
   defaultCheckin?: string
@@ -23,7 +28,10 @@ export function HotelSearchBar({
   defaultGuests = 2,
 }: Props) {
   const router = useRouter()
-  const [destination, setDestination] = useState(defaultDestination)
+  const [destination, setDestination] = useState<DestinationState>({
+    name: defaultDestination,
+    placeId: '',
+  })
   const [checkin, setCheckin] = useState(defaultCheckin)
   const [checkout, setCheckout] = useState(defaultCheckout)
   const [guests, setGuests] = useState(defaultGuests)
@@ -46,14 +54,14 @@ export function HotelSearchBar({
     }
   }, []) // intentionally empty — only run on mount to set defaults
 
-  // Autocomplete
+  // Autocomplete — only fire when name changes; placeId change should not re-trigger
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (destination.length < 2) { setPlaces([]); return }
+    if (destination.name.length < 2) { setPlaces([]); return }
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/travel/autocomplete?q=${encodeURIComponent(destination)}`)
+        const res = await fetch(`/api/travel/autocomplete?q=${encodeURIComponent(destination.name)}`)
         const data = await res.json()
         setPlaces(data.places ?? [])
         setShowSuggestions(true)
@@ -61,24 +69,32 @@ export function HotelSearchBar({
         setPlaces([])
       }
     }, 300)
-  }, [destination])
+  }, [destination.name])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!destination || !checkin || !checkout) return
+    if (!destination.name || !checkin || !checkout) return
     const params = new URLSearchParams({
-      dest: destination,
+      dest: destination.name,
       checkin,
       checkout,
       guests: String(guests),
     })
+    if (destination.placeId) {
+      params.set('placeId', destination.placeId)
+    }
     router.push(`/travel/hotels?${params.toString()}`)
   }
 
   const selectPlace = (place: Place) => {
-    setDestination(place.name)
+    setDestination({ name: place.name, placeId: place.placeId ?? '' })
     setPlaces([])
     setShowSuggestions(false)
+  }
+
+  const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Free-typing clears placeId since we no longer have a verified autocomplete selection
+    setDestination({ name: e.target.value, placeId: '' })
   }
 
   return (
@@ -92,8 +108,8 @@ export function HotelSearchBar({
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg">travel_explore</span>
             <input
               type="text"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+              value={destination.name}
+              onChange={handleDestinationChange}
               onFocus={() => places.length > 0 && setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               placeholder="Tokyo, Dubai, Istanbul…"

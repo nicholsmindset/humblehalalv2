@@ -5,13 +5,20 @@ import { getLiteApiClient } from '@/lib/liteapi/client'
 import { enrichHotels, type HotelLocation } from '@/lib/liteapi/enrich'
 import { createClient } from '@/lib/supabase/server'
 import { checkLimit, travelSearchLimiter, getIdentifier } from '@/lib/security/rate-limit'
+import { travelSearchSchema } from '@/lib/validation/schemas'
 
 export async function POST(request: NextRequest) {
   const rl = await checkLimit(travelSearchLimiter, getIdentifier(request))
   if (rl.limited) return rl.response
 
   const body = await request.json()
-  const { destination, checkin, checkout, guests, currency = 'SGD' } = body
+
+  const parsedBody = travelSearchSchema.safeParse(body)
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: parsedBody.error }, { status: 400 })
+  }
+
+  const { destination, checkin, checkout, guests, currency = 'SGD', placeId } = parsedBody.data
 
   if (!destination || !checkin || !checkout || !guests) {
     return NextResponse.json({ error: 'Missing required search parameters' }, { status: 400 })
@@ -63,7 +70,7 @@ export async function POST(request: NextRequest) {
 
   let ratesResult: any
   try {
-    ratesResult = await liteapi.getFullRates({
+    const ratesParams: Record<string, any> = {
       hotelIds: hotelIds.slice(0, 50),
       checkin,
       checkout,
@@ -71,7 +78,10 @@ export async function POST(request: NextRequest) {
       currency,
       guestNationality: 'SG',
       timeout: 20,
-    })
+    }
+    if (placeId) ratesParams.placeId = placeId
+
+    ratesResult = await liteapi.getFullRates(ratesParams)
   } catch (err: any) {
     console.error('[travel/search] getFullRates error:', err?.message)
     return NextResponse.json({ error: 'Hotel search failed' }, { status: 502 })
