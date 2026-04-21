@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       console.error('[travel/search] getFullRates error:', err?.message)
       return null
     }),
-    enrichHotels(staticLocations).catch(() => ({} as Awaited<ReturnType<typeof enrichHotels>>)),
+    enrichHotels(staticLocations).catch(() => ({}) as Record<string, any>),
   ])
 
   if (!ratesResult || ratesResult?.status === 'failed') {
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       guests,
       results_count: hotels.length,
     })
-  ).catch(() => {})
+  ).catch((err: any) => console.warn('[travel/search] analytics insert failed:', err?.message))
 
   // Merge enrichment into results
   const enrichedHotels = hotels.map((h: any) => ({
