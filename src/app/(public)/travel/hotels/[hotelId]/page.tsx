@@ -290,14 +290,33 @@ export default function HotelDetailPage() {
                 guests={Number(guests)}
               />
             ) : (
-              <div className="text-center py-4 text-charcoal/40">
-                <p className="text-sm">Search for availability to see prices</p>
-                <Link
-                  href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? '')}&checkin=${checkin}&checkout=${checkout}&guests=${guests}`}
-                  className="mt-2 text-sm text-primary hover:underline inline-block"
-                >
-                  Search hotels →
-                </Link>
+              <div className="text-center py-6 space-y-3">
+                <span className="material-symbols-outlined text-3xl text-charcoal/20 block">calendar_month</span>
+                {checkin && checkout ? (
+                  <>
+                    <p className="text-sm font-semibold text-charcoal">No rooms available</p>
+                    <p className="text-xs text-charcoal/40">
+                      Rates may have expired or no rooms match your dates.
+                    </p>
+                    <a
+                      href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? hotel.name)}&checkin=${checkin}&checkout=${checkout}&guests=${guests}`}
+                      className="inline-block mt-1 text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Search again
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-charcoal">Check availability</p>
+                    <p className="text-xs text-charcoal/40">Select dates to see rooms and prices.</p>
+                    <a
+                      href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? hotel.name)}`}
+                      className="inline-block mt-1 text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Search with dates
+                    </a>
+                  </>
+                )}
               </div>
             )}
 
