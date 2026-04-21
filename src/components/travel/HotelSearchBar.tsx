@@ -37,6 +37,8 @@ export function HotelSearchBar({
   const [guests, setGuests] = useState(defaultGuests)
   const [places, setPlaces] = useState<Place[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [autocompleteLoading, setAutocompleteLoading] = useState(false)
+  const [dateError, setDateError] = useState<string | null>(null)
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Default dates: tomorrow + 3 nights (only on mount when no defaults provided)
@@ -60,6 +62,7 @@ export function HotelSearchBar({
     if (destination.name.length < 2) { setPlaces([]); return }
 
     debounceRef.current = setTimeout(async () => {
+      setAutocompleteLoading(true)
       try {
         const res = await fetch(`/api/travel/autocomplete?q=${encodeURIComponent(destination.name)}`)
         const data = await res.json()
@@ -67,6 +70,8 @@ export function HotelSearchBar({
         setShowSuggestions(true)
       } catch {
         setPlaces([])
+      } finally {
+        setAutocompleteLoading(false)
       }
     }, 300)
   }, [destination.name])
@@ -74,6 +79,11 @@ export function HotelSearchBar({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!destination.name || !checkin || !checkout) return
+    if (checkin && checkout && new Date(checkout) <= new Date(checkin)) {
+      setDateError('Check-out must be after check-in')
+      return
+    }
+    setDateError(null)
     const params = new URLSearchParams({
       dest: destination.name,
       checkin,
@@ -117,8 +127,14 @@ export function HotelSearchBar({
               className="w-full pl-9 pr-3 h-11 text-base text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary placeholder:text-charcoal/30"
             />
           </div>
-          {showSuggestions && places.length > 0 && (
+          {(autocompleteLoading || (showSuggestions && places.length > 0)) && (
             <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+              {autocompleteLoading && (
+                <li className="px-4 py-3 flex items-center gap-2 text-xs text-charcoal/40">
+                  <div className="w-3 h-3 border border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
+                  Searching…
+                </li>
+              )}
               {places.map((p) => (
                 <li key={p.placeId}>
                   <button
@@ -156,7 +172,7 @@ export function HotelSearchBar({
           <input
             type="date"
             value={checkout}
-            onChange={(e) => setCheckout(e.target.value)}
+            onChange={(e) => { setCheckout(e.target.value); setDateError(null) }}
             min={checkin || new Date().toISOString().slice(0, 10)}
             required
             className="w-full px-3 h-11 text-base text-charcoal border border-gray-200 rounded-xl focus:outline-none focus:border-primary"
@@ -188,6 +204,9 @@ export function HotelSearchBar({
           </button>
         </div>
       </div>
+        {dateError && (
+          <p className="text-xs text-red-500 mt-2 pl-2">{dateError}</p>
+        )}
     </form>
   )
 }
