@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
@@ -40,8 +40,10 @@ function cancellationLabel(policies: any[] | undefined): { text: string; free: b
 }
 
 export function RoomSelector({ hotelId, hotelName, city, rates, checkin, checkout, guests }: RoomSelectorProps) {
-  const nights = (checkin && checkout)
-    ? Math.max(1, Math.round((new Date(checkout).getTime() - new Date(checkin).getTime()) / 86400000))
+  const checkinMs = checkin ? new Date(checkin).getTime() : NaN
+  const checkoutMs = checkout ? new Date(checkout).getTime() : NaN
+  const nights = (!isNaN(checkinMs) && !isNaN(checkoutMs))
+    ? Math.max(1, Math.round((checkoutMs - checkinMs) / 86400000))
     : 1
 
   // Deduplicate by offerId only — keep all distinct offers, sort by price
@@ -59,23 +61,29 @@ export function RoomSelector({ hotelId, hotelName, city, rates, checkin, checkou
     uniqueRates[0]?.offerId ?? null
   )
 
+  // Reset selection when rates change (e.g. date change without unmount)
+  useEffect(() => {
+    setSelectedOfferId(uniqueRates[0]?.offerId ?? null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rates])
+
   const selectedRate = uniqueRates.find((r) => r.offerId === selectedOfferId)
   const selectedTotal = selectedRate
     ? Number(selectedRate.retailRate?.total?.[0]?.amount ?? 0)
     : 0
   const selectedCurrency = selectedRate?.retailRate?.total?.[0]?.currency ?? 'SGD'
 
-  const checkoutUrl = selectedOfferId
+  const checkoutUrl = (selectedOfferId && selectedRate)
     ? `/travel/hotels/${hotelId}/checkout?` +
       `offerId=${encodeURIComponent(selectedOfferId)}` +
       `&checkin=${encodeURIComponent(checkin)}` +
       `&checkout=${encodeURIComponent(checkout)}` +
-      `&guests=${guests}` +
+      `&guests=${encodeURIComponent(String(guests))}` +
       `&hotelName=${encodeURIComponent(hotelName)}` +
       `&city=${encodeURIComponent(city)}` +
-      `&amount=${selectedTotal}` +
+      `&amount=${encodeURIComponent(String(selectedTotal))}` +
       `&currency=${encodeURIComponent(selectedCurrency)}` +
-      `&roomName=${encodeURIComponent(selectedRate?.name ?? '')}`
+      `&roomName=${encodeURIComponent(selectedRate.name)}`
     : null
 
   return (
@@ -115,7 +123,7 @@ export function RoomSelector({ hotelId, hotelName, city, rates, checkin, checkou
                 </span>
               </div>
               <div className="text-right flex-shrink-0">
-                {perNight !== null ? (
+                {perNight !== null && perNight > 0 ? (
                   <>
                     <div className="text-primary font-bold text-sm">
                       {price?.currency} {perNight.toLocaleString()}<span className="text-xs font-normal text-charcoal/40">/night</span>
