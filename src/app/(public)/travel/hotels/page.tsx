@@ -100,6 +100,10 @@ function HotelSearchContent() {
   const guestsParam = parseInt(searchParams.get('guests') ?? '2')
   const placeId = searchParams.get('placeId') ?? ''
 
+  const nights = (checkin && checkout)
+    ? Math.max(1, Math.round((new Date(checkout).getTime() - new Date(checkin).getTime()) / 86400000))
+    : 1
+
   const [hotels, setHotels] = useState<Hotel[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -273,6 +277,8 @@ function HotelSearchContent() {
                 const rate = h.rates?.[0]
                 const price = rate?.retailRate?.total?.[0]
                 const cancellation = rate?.cancellationPolicies?.cancelPolicyInfos?.[0]?.policy
+                const totalAmount = price ? parseFloat(String(price.amount)) : null
+                const pricePerNight = totalAmount !== null ? Math.round(totalAmount / nights) : null
                 return (
                   <HotelCard
                     key={id}
@@ -280,10 +286,10 @@ function HotelSearchContent() {
                     name={h.name}
                     stars={h.starRating ?? 0}
                     imageUrl={h.imageUrl ?? null}
-                    pricePerNight={price ? price.amount : null}
+                    pricePerNight={pricePerNight}
                     currency={price?.currency ?? 'SGD'}
-                    city={h.location?.city ?? ''}
-                    address={h.location?.address ?? ''}
+                    city={h.city ?? h.location?.city ?? ''}
+                    address={h.address ?? h.location?.address ?? ''}
                     reviewRating={h.guestRating ?? null}
                     reviewCount={h.reviewCount ?? null}
                     isRefundable={cancellation?.toLowerCase().includes('free') ?? false}
