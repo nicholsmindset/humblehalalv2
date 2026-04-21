@@ -250,11 +250,11 @@ export default function HotelDetailPage() {
           )}
 
           {/* Reviews */}
-          {reviews.length > 0 && (
+          {reviews.filter(r => r.comment?.trim()).length > 0 && (
             <div>
               <h2 className="font-bold text-charcoal text-base mb-3">Guest reviews</h2>
               <div className="space-y-3">
-                {reviews.map((r, i) => (
+                {reviews.filter(r => r.comment?.trim()).slice(0, 5).map((r, i) => (
                   <div key={r.reviewId ?? i} className="bg-white border border-gray-200 rounded-xl p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
@@ -282,6 +282,8 @@ export default function HotelDetailPage() {
             {(hotel.rates && hotel.rates.length > 0) ? (
               <RoomSelector
                 hotelId={hotel.hotelId ?? hotel.id ?? hotelId}
+                hotelName={hotel.name}
+                city={hotel.location?.city ?? ''}
                 rates={hotel.rates}
                 checkin={checkin}
                 checkout={checkout}
