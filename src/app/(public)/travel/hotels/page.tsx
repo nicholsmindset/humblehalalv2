@@ -262,6 +262,16 @@ function HotelSearchContent() {
             </div>
           )}
 
+          {!loading && !error && dest && hotels.length === 0 && (
+            <div className="text-center py-16">
+              <span className="material-symbols-outlined text-5xl block mb-3 text-charcoal/20">hotel_class</span>
+              <p className="font-semibold text-charcoal text-lg">No hotels found in {dest}</p>
+              <p className="text-sm text-charcoal/50 mt-1 max-w-xs mx-auto">
+                Try a nearby city or adjust your dates. Our partner covers 2M+ hotels worldwide.
+              </p>
+            </div>
+          )}
+
           {!loading && !error && !dest && (
             <div className="text-center py-16 text-charcoal/40">
               <span className="material-symbols-outlined text-5xl block mb-3">travel_explore</span>
