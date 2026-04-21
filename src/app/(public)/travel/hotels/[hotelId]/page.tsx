@@ -250,11 +250,11 @@ export default function HotelDetailPage() {
           )}
 
           {/* Reviews */}
-          {reviews.length > 0 && (
+          {reviews.filter(r => r.comment?.trim()).length > 0 && (
             <div>
               <h2 className="font-bold text-charcoal text-base mb-3">Guest reviews</h2>
               <div className="space-y-3">
-                {reviews.map((r, i) => (
+                {reviews.filter(r => r.comment?.trim()).slice(0, 5).map((r, i) => (
                   <div key={r.reviewId ?? i} className="bg-white border border-gray-200 rounded-xl p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
@@ -282,20 +282,41 @@ export default function HotelDetailPage() {
             {(hotel.rates && hotel.rates.length > 0) ? (
               <RoomSelector
                 hotelId={hotel.hotelId ?? hotel.id ?? hotelId}
+                hotelName={hotel.name}
+                city={hotel.location?.city ?? ''}
                 rates={hotel.rates}
                 checkin={checkin}
                 checkout={checkout}
                 guests={Number(guests)}
               />
             ) : (
-              <div className="text-center py-4 text-charcoal/40">
-                <p className="text-sm">Search for availability to see prices</p>
-                <Link
-                  href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? '')}&checkin=${checkin}&checkout=${checkout}&guests=${guests}`}
-                  className="mt-2 text-sm text-primary hover:underline inline-block"
-                >
-                  Search hotels →
-                </Link>
+              <div className="text-center py-6 space-y-3">
+                <span className="material-symbols-outlined text-3xl text-charcoal/20 block">calendar_month</span>
+                {checkin && checkout ? (
+                  <>
+                    <p className="text-sm font-semibold text-charcoal">No rooms available</p>
+                    <p className="text-xs text-charcoal/40">
+                      Rates may have expired or no rooms match your dates.
+                    </p>
+                    <Link
+                      href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? hotel.name)}&checkin=${checkin}&checkout=${checkout}&guests=${guests}`}
+                      className="inline-block mt-1 text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Search again
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-charcoal">Check availability</p>
+                    <p className="text-xs text-charcoal/40">Select dates to see rooms and prices.</p>
+                    <Link
+                      href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? hotel.name)}`}
+                      className="inline-block mt-1 text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Search with dates
+                    </Link>
+                  </>
+                )}
               </div>
             )}
 

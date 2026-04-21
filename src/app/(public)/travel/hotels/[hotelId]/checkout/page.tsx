@@ -26,12 +26,13 @@ function CheckoutContent() {
   const router = useRouter()
 
   const offerId    = searchParams.get('offerId') ?? ''
-  const hotelName  = searchParams.get('hotelName') ?? 'Hotel'
+  const hotelName  = searchParams.get('hotelName') ?? ''
   const city       = searchParams.get('city') ?? ''
   const checkin    = searchParams.get('checkin') ?? ''
   const checkout   = searchParams.get('checkout') ?? ''
   const amount     = searchParams.get('amount') ?? ''
   const currency   = searchParams.get('currency') ?? 'SGD'
+  const roomName   = searchParams.get('roomName') ?? ''
 
   const [step, setStep] = useState<Step>('form')
   const [sdkReady, setSdkReady] = useState(false)
@@ -54,16 +55,17 @@ function CheckoutContent() {
   const [loading, setLoading]   = useState(false)
 
   // Initialize payment SDK after secretKey is set and SDK is ready
-  const initPaymentSdk = useCallback(() => {
+  const initPaymentSdk = useCallback((onSuccess: (txId: string) => void) => {
     if (!window.liteAPIPayment || !secretKey) return
+    // Ensure container exists in DOM before SDK tries to mount into it
+    if (!document.getElementById('liteapi-payment-container')) return
     try {
       window.liteAPIPayment.init({
         secretKey,
         containerId: 'liteapi-payment-container',
         onSuccess: (data) => {
-          const txId = data?.transactionId ?? transactionId
-          setTransactionId(txId)
-          handleBook(txId)
+          const txId = data?.transactionId ?? ''
+          onSuccess(txId)
         },
         onError: (err) => {
           console.error('[checkout] payment SDK error:', err)
@@ -73,26 +75,24 @@ function CheckoutContent() {
       })
     } catch (err) {
       console.error('[checkout] payment SDK init failed:', err)
-      // If SDK init throws, treat as sandbox
       setSandboxMode(true)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [secretKey, transactionId])
+  }, [secretKey])
 
   // When payment step is active, try to init SDK or detect sandbox
   useEffect(() => {
     if (step !== 'payment') return
 
-    if (sandboxMode || !secretKey) {
-      // No SDK needed in sandbox mode
-      return
-    }
+    if (sandboxMode || !secretKey) return
 
     if (sdkReady && secretKey) {
-      initPaymentSdk()
+      initPaymentSdk((txId) => {
+        setTransactionId(txId)
+        handleBook(txId)
+      })
     }
 
-    // If SDK doesn't load within 8s, show sandbox fallback
+    // If SDK doesn't load within 8s, fall back to sandbox mode
     const timer = setTimeout(() => {
       if (!sdkReady) {
         console.warn('[checkout] Payment SDK load timeout — falling back to sandbox mode')
@@ -102,6 +102,7 @@ function CheckoutContent() {
     }, 8000)
 
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, sdkReady, secretKey, sandboxMode, initPaymentSdk])
 
   async function handlePrebook(e: React.FormEvent) {
@@ -181,11 +182,15 @@ function CheckoutContent() {
   }
 
   const nights = checkin && checkout
-    ? Math.round((new Date(checkout).getTime() - new Date(checkin).getTime()) / 86400000)
+    ? Math.max(1, Math.round((new Date(checkout).getTime() - new Date(checkin).getTime()) / 86400000))
     : null
 
   const formattedAmount = amount
     ? new Intl.NumberFormat('en-SG', { style: 'currency', currency, minimumFractionDigits: 0 }).format(Number(amount))
+    : null
+
+  const perNightAmount = (amount && nights)
+    ? new Intl.NumberFormat('en-SG', { style: 'currency', currency, minimumFractionDigits: 0 }).format(Math.round(Number(amount) / nights))
     : null
 
   return (
@@ -231,11 +236,17 @@ function CheckoutContent() {
               <p className="text-xs text-charcoal/40 mt-1">
                 {searchParams.get('guests') ?? '2'} guest{(parseInt(searchParams.get('guests') ?? '2')) !== 1 ? 's' : ''}
               </p>
+              {roomName && (
+                <p className="text-xs text-charcoal/50 mt-1 font-medium">{roomName}</p>
+              )}
             </div>
             {formattedAmount && (
               <div className="text-right flex-shrink-0">
-                <p className="font-extrabold text-charcoal text-xl">{formattedAmount}</p>
-                <p className="text-xs text-charcoal/40">total incl. taxes</p>
+                {perNightAmount && nights && nights > 1 && (
+                  <p className="text-sm text-primary font-semibold">{perNightAmount}<span className="text-xs font-normal text-charcoal/40">/night</span></p>
+                )}
+                <p className="font-extrabold text-charcoal text-lg">{formattedAmount}</p>
+                <p className="text-xs text-charcoal/40">total {nights ? `· ${nights} night${nights !== 1 ? 's' : ''}` : ''}</p>
               </div>
             )}
           </div>
@@ -272,9 +283,21 @@ function CheckoutContent() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-600 flex items-start gap-2">
             <span className="material-symbols-outlined text-base mt-0.5 flex-shrink-0">error</span>
-            <div>
-              <p>{error}</p>
-              {step === 'form' && (
+            <div className="flex-1">
+              <p className="font-medium">
+                {error.includes('availability') || error.includes('expired')
+                  ? 'This rate is no longer available — hotel rates expire quickly.'
+                  : error}
+              </p>
+              {(error.includes('availability') || error.includes('expired')) && (
+                <a
+                  href="/travel"
+                  className="inline-block mt-2 text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Search hotels again
+                </a>
+              )}
+              {!error.includes('availability') && !error.includes('expired') && (
                 <button onClick={() => setError(null)} className="text-xs text-red-500 hover:underline mt-1">
                   Dismiss
                 </button>
