@@ -42,7 +42,6 @@ export function HotelSearchBar({
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Default dates: tomorrow + 3 nights (only on mount when no defaults provided)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!checkin) {
       const tomorrow = new Date()
@@ -54,6 +53,7 @@ export function HotelSearchBar({
       checkout3.setDate(checkout3.getDate() + 4)
       setCheckout(checkout3.toISOString().slice(0, 10))
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // intentionally empty — only run on mount to set defaults
 
   // Autocomplete — only fire when name changes; placeId change should not re-trigger
