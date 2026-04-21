@@ -298,23 +298,23 @@ export default function HotelDetailPage() {
                     <p className="text-xs text-charcoal/40">
                       Rates may have expired or no rooms match your dates.
                     </p>
-                    <a
+                    <Link
                       href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? hotel.name)}&checkin=${checkin}&checkout=${checkout}&guests=${guests}`}
                       className="inline-block mt-1 text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       Search again
-                    </a>
+                    </Link>
                   </>
                 ) : (
                   <>
                     <p className="text-sm font-semibold text-charcoal">Check availability</p>
                     <p className="text-xs text-charcoal/40">Select dates to see rooms and prices.</p>
-                    <a
+                    <Link
                       href={`/travel/hotels?dest=${encodeURIComponent(hotel.location?.city ?? hotel.name)}`}
                       className="inline-block mt-1 text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       Search with dates
-                    </a>
+                    </Link>
                   </>
                 )}
               </div>
